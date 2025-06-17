@@ -235,6 +235,115 @@ def predict_unified():
         logger.error(f"予測API エラー: {e}")
         return create_error_response(f"予測開始に失敗しました: {str(e)}", 500)
 
+# app.py に以下のエンドポイントを追加
+
+@app.route('/api/debug/environment', methods=['GET'])
+def debug_environment():
+    """環境変数とシステム情報をデバッグ"""
+    try:
+        env_info = {
+            # 環境変数チェック
+            'environment_variables': {
+                'PYTHON_VERSION': os.environ.get('PYTHON_VERSION', 'NOT_SET'),
+                'FLASK_ENV': os.environ.get('FLASK_ENV', 'NOT_SET'),
+                'PORT': os.environ.get('PORT', 'NOT_SET'),
+                'CELERY_BROKER_URL': os.environ.get('CELERY_BROKER_URL', 'NOT_SET')[:50] + '...' if os.environ.get('CELERY_BROKER_URL') else 'NOT_SET',
+                'CELERY_RESULT_BACKEND': os.environ.get('CELERY_RESULT_BACKEND', 'NOT_SET')[:50] + '...' if os.environ.get('CELERY_RESULT_BACKEND') else 'NOT_SET',
+            },
+            
+            # Python情報
+            'python_info': {
+                'version': os.sys.version,
+                'executable': os.sys.executable,
+                'platform': os.sys.platform,
+            },
+            
+            # Celery接続テスト
+            'celery_info': {},
+            
+            # ファイルシステム
+            'filesystem': {
+                'current_directory': os.getcwd(),
+                'render_yaml_exists': os.path.exists('./render.yaml'),
+                'requirements_exists': os.path.exists('./requirements.txt'),
+                'worker_py_exists': os.path.exists('./worker.py'),
+            }
+        }
+        
+        # Celery接続テスト
+        try:
+            from celery_app import celery_app
+            inspect = celery_app.control.inspect()
+            active_workers = inspect.active()
+            env_info['celery_info'] = {
+                'celery_imported': True,
+                'active_workers': active_workers,
+                'broker_url_configured': bool(os.environ.get('CELERY_BROKER_URL')),
+            }
+        except Exception as e:
+            env_info['celery_info'] = {
+                'celery_imported': False,
+                'error': str(e)
+            }
+        
+        return create_success_response(env_info, "環境デバッグ情報")
+        
+    except Exception as e:
+        logger.error(f"環境デバッグエラー: {e}")
+        return create_error_response(f"環境情報取得失敗: {str(e)}", 500)
+
+
+@app.route('/api/debug/services', methods=['GET']) 
+def debug_services():
+    """Renderサービス状態の確認"""
+    try:
+        service_info = {
+            'current_service': {
+                'name': 'Web Service',
+                'type': 'web',
+                'process_id': os.getpid(),
+            },
+            
+            'expected_services': {
+                'web': 'miniloto-prediction-api',
+                'worker': 'miniloto-celery-worker', 
+                'redis': 'miniloto-redis'
+            },
+            
+            'render_yaml_config': {},
+        }
+        
+        # render.yamlの内容を読み込んで確認
+        try:
+            if os.path.exists('./render.yaml'):
+                with open('./render.yaml', 'r') as f:
+                    yaml_content = f.read()
+                    service_info['render_yaml_config'] = {
+                        'file_exists': True,
+                        'file_size': len(yaml_content),
+                        'services_count': yaml_content.count('- type:'),
+                        'contains_web': '- type: web' in yaml_content,
+                        'contains_worker': '- type: worker' in yaml_content,
+                        'contains_redis': '- type: redis' in yaml_content,
+                    }
+            else:
+                service_info['render_yaml_config'] = {
+                    'file_exists': False,
+                    'error': 'render.yaml not found in current directory'
+                }
+        except Exception as e:
+            service_info['render_yaml_config'] = {
+                'file_exists': False,
+                'error': str(e)
+            }
+        
+        return create_success_response(service_info, "サービス情報")
+        
+    except Exception as e:
+        logger.error(f"サービスデバッグエラー: {e}")
+        return create_error_response(f"サービス情報取得失敗: {str(e)}", 500)
+
+
 # 🔧 初期化API修正版（GET/POST両対応）
 @app.route('/api/init_heavy', methods=['GET', 'POST'])
 def init_heavy_unified():
