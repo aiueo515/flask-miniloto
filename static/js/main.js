@@ -617,6 +617,39 @@ class SystemStatusChecker {
     }
 }
 
+// 🔧 強制デバッグシステム初期化（main.js の最下部に追加）
+
 // グローバルに公開
 window.mobileDebug = new MobileDebugConsole();
 window.systemChecker = new SystemStatusChecker();
+
+// さらに強制初期化（念のため）
+document.addEventListener('DOMContentLoaded', () => {
+    // デバッグシステムが初期化されていない場合の緊急対処
+    if (!window.mobileDebug) {
+        console.log('🔧 緊急デバッグシステム初期化...');
+        try {
+            window.mobileDebug = new MobileDebugConsole();
+            window.systemChecker = new SystemStatusChecker();
+            console.log('✅ 緊急デバッグシステム初期化完了');
+        } catch (error) {
+            console.error('❌ 緊急デバッグシステム初期化失敗:', error);
+        }
+    }
+});
+
+// ページ読み込み完了後にも再確認
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (!window.mobileDebug) {
+            console.log('🔧 最終緊急デバッグシステム初期化...');
+            try {
+                window.mobileDebug = new MobileDebugConsole();
+                window.systemChecker = new SystemStatusChecker();
+                console.log('✅ 最終デバッグシステム初期化完了');
+            } catch (error) {
+                console.error('❌ 最終デバッグシステム初期化失敗:', error);
+            }
+        }
+    }, 1000); // 1秒待機してから実行
+});
