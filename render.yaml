@@ -1,5 +1,5 @@
 services:
-  # メインWebアプリケーション  
+  # メインWebアプリケーション
   - type: web
     name: miniloto-prediction-api
     env: python
@@ -20,7 +20,7 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Celery設定
+      # Celery設定（Redis有料枠使用）
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
@@ -31,10 +31,12 @@ services:
           type: redis
           name: miniloto-redis
           property: connectionString
-    disk:
-      name: miniloto-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+      # ローカルストレージ使用（ダウンロード/アップロード対応）
+      - key: USE_LOCAL_STORAGE
+        value: "true"
+      - key: DATA_DIR
+        value: /tmp/miniloto_data
+    # disk削除（無料枠では使用不可）
     healthCheckPath: /
     autoDeploy: true
     region: oregon
@@ -54,7 +56,7 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Celery設定
+      # Celery設定（Redis有料枠使用）
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
@@ -70,16 +72,18 @@ services:
         value: "1"
       - key: CELERY_WORKER_MAX_MEMORY
         value: "400000"
-    disk:
-      name: miniloto-worker-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+      # ローカルストレージ使用
+      - key: USE_LOCAL_STORAGE
+        value: "true"
+      - key: DATA_DIR
+        value: /tmp/miniloto_data
+    # disk削除（無料枠では使用不可）
     autoDeploy: true
     region: oregon
 
-  # Redis（Celeryブローカー）
+  # Redis（有料枠使用）
   - type: redis
     name: miniloto-redis
-    plan: free
+    plan: standard
     region: oregon
     maxmemoryPolicy: allkeys-lru
