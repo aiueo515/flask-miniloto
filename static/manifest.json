@@ -1,7 +1,7 @@
 {
-  "name": "ロト7予測 - AI機械学習予測アプリ",
-  "short_name": "ロト7予測",
-  "description": "AI機械学習による高精度なロト7予測アプリ。自動データ取得、予測永続化、学習改善機能付き。",
+  "name": "ミニロト予測 - AI機械学習予測アプリ",
+  "short_name": "ミニロト予測",
+  "description": "AI機械学習による高精度なミニロト予測アプリ。自動データ取得、予測永続化、学習改善機能付き。",
   "version": "1.0.0",
   "start_url": "/",
   "display": "standalone",
@@ -75,7 +75,7 @@
       "sizes": "375x812",
       "type": "image/png",
       "platform": "narrow",
-      "label": "予測画面 - モバイル"
+      "label": "ミニロト予測画面 - モバイル"
     },
     {
       "src": "/static/screenshots/mobile-history.png",
@@ -89,15 +89,15 @@
       "sizes": "1280x720",
       "type": "image/png",
       "platform": "wide",
-      "label": "予測画面 - デスクトップ"
+      "label": "ミニロト予測画面 - デスクトップ"
     }
   ],
   
   "shortcuts": [
     {
-      "name": "新しい予測",
+      "name": "新しいミニロト予測",
       "short_name": "予測",
-      "description": "最新の予測を取得",
+      "description": "最新のミニロト予測を取得",
       "url": "/?action=predict",
       "icons": [
         {
@@ -110,7 +110,7 @@
     {
       "name": "予測履歴",
       "short_name": "履歴",
-      "description": "過去の予測履歴を確認",
+      "description": "過去のミニロト予測履歴を確認",
       "url": "/?tab=history",
       "icons": [
         {
