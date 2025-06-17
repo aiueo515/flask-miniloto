@@ -1,5 +1,5 @@
 """
-ファイル管理ユーティリティ
+ファイル管理ユーティリティ - ミニロト対応版
 モデルや履歴ファイルの保存・読み込みを管理
 """
 
@@ -18,7 +18,8 @@ class FileManager:
         self.base_dir = base_dir
         self.model_path = os.path.join(base_dir, 'model.pkl')
         self.history_path = os.path.join(base_dir, 'prediction_history.csv')
-        self.data_path = os.path.join(base_dir, 'loto7_data.csv')
+        # ミニロト用のデータファイル名に変更
+        self.data_path = os.path.join(base_dir, 'miniloto_data.csv')
         
         # ディレクトリ作成
         os.makedirs(base_dir, exist_ok=True)
@@ -51,7 +52,11 @@ class FileManager:
                 'pair_freq': prediction_system.pair_freq,
                 'pattern_stats': prediction_system.pattern_stats,
                 'data_count': prediction_system.data_count,
-                'saved_at': datetime.now().isoformat()
+                'saved_at': datetime.now().isoformat(),
+                # ミニロト対応の識別子を追加
+                'game_type': 'miniloto',
+                'number_range': 31,
+                'select_count': 5
             }
             
             # 自動照合学習の改善メトリクスも保存
@@ -61,7 +66,7 @@ class FileManager:
             with open(self.model_path, 'wb') as f:
                 pickle.dump(model_data, f)
             
-            logger.info(f"モデルを保存: {self.model_path}")
+            logger.info(f"ミニロトモデルを保存: {self.model_path}")
             return True
             
         except Exception as e:
@@ -78,6 +83,11 @@ class FileManager:
             with open(self.model_path, 'rb') as f:
                 model_data = pickle.load(f)
             
+            # ミニロト用モデルかチェック
+            if model_data.get('game_type') == 'loto7':
+                logger.warning("ロト7用モデルが検出されました。ミニロト用に新規学習が推奨されます。")
+                # 互換性のため読み込みは続行するが警告を出す
+            
             # 予測システムにモデルデータを復元
             prediction_system.trained_models = model_data['trained_models']
             prediction_system.scalers = model_data['scalers']
@@ -93,7 +103,7 @@ class FileManager:
                 if hasattr(prediction_system, 'auto_learner'):
                     prediction_system.auto_learner.improvement_metrics = model_data['improvement_metrics']
             
-            logger.info(f"モデルを読み込み: {self.model_path}")
+            logger.info(f"ミニロトモデルを読み込み: {self.model_path}")
             logger.info(f"学習データ数: {prediction_system.data_count}")
             logger.info(f"モデル数: {len(prediction_system.trained_models)}")
             
@@ -119,16 +129,16 @@ class FileManager:
                     'verified': entry['verified']
                 }
                 
-                # 各予測セットを行として追加
+                # 各予測セットを行として追加（ミニロトは5個）
                 for i, pred_set in enumerate(entry['predictions']):
                     row = base_row.copy()
                     row['prediction_idx'] = i
-                    for j in range(7):
+                    for j in range(5):  # ミニロトは5個
                         row[f'pred_{j+1}'] = pred_set[j]
                     
                     # 検証済みの場合は実際の番号と一致数も記録
                     if entry['verified'] and entry['actual']:
-                        for j in range(7):
+                        for j in range(5):  # ミニロトは5個
                             row[f'actual_{j+1}'] = entry['actual'][j]
                         row['matches'] = entry['matches'][i] if i < len(entry['matches']) else 0
                     
@@ -137,7 +147,7 @@ class FileManager:
             df = pd.DataFrame(rows)
             df.to_csv(self.history_path, index=False, encoding='utf-8')
             
-            logger.info(f"予測履歴をCSVに保存: {self.history_path}")
+            logger.info(f"ミニロト予測履歴をCSVに保存: {self.history_path}")
             return True
             
         except Exception as e:
@@ -164,14 +174,14 @@ class FileManager:
                 verified = group['verified'].iloc[0]
                 
                 for _, row in group.iterrows():
-                    # 予測番号を取得
-                    pred = [int(row[f'pred_{i+1}']) for i in range(7)]
+                    # 予測番号を取得（ミニロトは5個）
+                    pred = [int(row[f'pred_{i+1}']) for i in range(5)]
                     predictions.append(pred)
                     
                     # 実際の番号と一致数を取得
                     if verified and 'actual_1' in row and pd.notna(row['actual_1']):
                         if actual is None:
-                            actual = [int(row[f'actual_{i+1}']) for i in range(7)]
+                            actual = [int(row[f'actual_{i+1}']) for i in range(5)]
                         if 'matches' in row and pd.notna(row['matches']):
                             matches.append(int(row['matches']))
                 
@@ -189,7 +199,7 @@ class FileManager:
             if any(entry['verified'] for entry in prediction_history.predictions):
                 prediction_history._update_accuracy_stats()
             
-            logger.info(f"予測履歴を読み込み: {len(prediction_history.predictions)}回分")
+            logger.info(f"ミニロト予測履歴を読み込み: {len(prediction_history.predictions)}回分")
             return True
             
         except Exception as e:
@@ -200,7 +210,7 @@ class FileManager:
         """データをキャッシュに保存"""
         try:
             data_df.to_csv(self.data_path, index=False, encoding='utf-8')
-            logger.info(f"データをキャッシュに保存: {self.data_path}")
+            logger.info(f"ミニロトデータをキャッシュに保存: {self.data_path}")
             return True
         except Exception as e:
             logger.error(f"データキャッシュ保存エラー: {e}")
@@ -213,7 +223,7 @@ class FileManager:
                 return None
             
             df = pd.read_csv(self.data_path, encoding='utf-8')
-            logger.info(f"キャッシュからデータを読み込み: {len(df)}件")
+            logger.info(f"キャッシュからミニロトデータを読み込み: {len(df)}件")
             return df
         except Exception as e:
             logger.error(f"データキャッシュ読み込みエラー: {e}")
