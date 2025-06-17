@@ -350,6 +350,27 @@
     <script src="/static/js/mobile.js" 
             onload="trackScript('mobile.js', true)" 
             onerror="trackScript('mobile.js', false)"></script>
+<!-- index.html の </body> の直前に追加 -->
+<button id="manual-debug-btn" onclick="
+    if(window.mobileDebug) {
+        window.mobileDebug.toggle();
+    } else {
+        alert('デバッグシステムが読み込まれていません');
+    }
+" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    background: #FF5722;
+    border: none;
+    color: white;
+    font-size: 20px;
+    z-index: 999999;
+    cursor: pointer;
+">🔧</button>
 </body>
 
 </html>
