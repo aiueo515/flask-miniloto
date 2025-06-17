@@ -130,12 +130,12 @@ class TimeSeriesCrossValidator:
                         float(len([j for j in range(len(sorted_nums)-1) 
                                  if sorted_nums[j+1] - sorted_nums[j] == 1])), # 連続数
                         float(current[0]),                 # 第1数字
-                        float(current[3]),                 # 第4数字
-                        float(current[6]),                 # 第7数字
+                        float(current[2]),                 # 第3数字
+                        float(current[4]),                 # 第5数字
                         float(np.mean(gaps)),              # 平均ギャップ
                         float(max(gaps)),                  # 最大ギャップ
                         float(min(gaps)),                  # 最小ギャップ
-                        float(len([x for x in current if x <= 12])), # 小数字数
+                        float(len([x for x in current if x <= 15])), # 小数字数
                     ]
                     
                     # 次回予測ターゲット
@@ -208,7 +208,7 @@ class TimeSeriesCrossValidator:
             scalers = model_data['scalers']
             
             # 本番と同じ基準特徴量（16次元）
-            base_features = [19.0, 10.0, 133.0, 3.5, 35.0, 5.0, 19.0, 30.0, 1.0, 10.0, 20.0, 30.0, 4.5, 8.0, 2.0, 3.0]
+            base_features = [16.0, 8.0, 80.0, 2.5, 29.0, 3.0, 16.0, 26.0, 1.0, 8.0, 16.0, 24.0, 6.5, 12.0, 2.0, 2.5]
             
             predictions = []
             

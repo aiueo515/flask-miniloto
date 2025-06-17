@@ -2,7 +2,7 @@
 
 # 正しいimport構文に修正
 from .progressive_learning import ProgressiveLearningManager
-from .prediction_system import AutoFetchEnsembleLoto7
+from .prediction_system import AutoFetchEnsembleMiniLoto
 from .data_fetcher import AutoDataFetcher
 from .prediction_history import RoundAwarePredictionHistory
 from .learning import AutoVerificationLearner
@@ -15,7 +15,7 @@ except ImportError:
 
 __all__ = [
     'ProgressiveLearningManager',
-    'AutoFetchEnsembleLoto7', 
+    'AutoFetchEnsembleMiniLoto', 
     'AutoDataFetcher',
     'RoundAwarePredictionHistory',
     'AutoVerificationLearner',
