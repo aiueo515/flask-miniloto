@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1890ff">
-    <meta name="description" content="AI機械学習による高精度なロト7予測アプリ">
+    <meta name="description" content="AI機械学習による高精度なミニロト予測アプリ">
     
     <!-- PWA設定 -->
     <link rel="manifest" href="/manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ロト7予測">
+    <meta name="apple-mobile-web-app-title" content="ミニロト予測">
     
     <!-- アイコン設定 -->
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
@@ -26,7 +26,7 @@
     <!-- フォント -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <title>ロト7予測 - AI機械学習予測アプリ</title>
+    <title>ミニロト予測 - AI機械学習予測アプリ</title>
 </head>
 <body>
     <!-- PWAインストールバナー -->
@@ -47,7 +47,7 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <h1 class="app-title">🎯 ロト7予測</h1>
+                    <h1 class="app-title">🎱 ミニロト予測</h1>
                     <div class="connection-status" id="connection-status">
                         <span class="status-indicator online"></span>
                         <span class="status-text">オンライン</span>
@@ -105,7 +105,7 @@
                 <!-- 次回予測 -->
                 <div class="prediction-card" id="prediction-card">
                     <div class="card-header">
-                        <h2 id="prediction-title">次回予測を取得中...</h2>
+                        <h2 id="prediction-title">次回ミニロト予測を取得中...</h2>
                         <div class="prediction-actions">
                             <button id="get-prediction-btn" class="btn btn-primary" disabled>
                                 <span class="btn-icon">🎯</span>
@@ -120,7 +120,7 @@
                     
                     <div id="prediction-loading" class="loading hidden">
                         <div class="loading-spinner"></div>
-                        <p>予測を生成中...</p>
+                        <p>ミニロト予測を生成中...</p>
                     </div>
                     
                     <div id="prediction-results" class="prediction-results hidden">
@@ -141,7 +141,7 @@
             <!-- 履歴タブ -->
             <div id="history-tab" class="tab-content">
                 <div class="history-header">
-                    <h2>予測履歴</h2>
+                    <h2>ミニロト予測履歴</h2>
                     <div class="history-controls">
                         <select id="history-count" class="select">
                             <option value="5">最新5件</option>
@@ -167,7 +167,7 @@
             <!-- 分析タブ -->
             <div id="analysis-tab" class="tab-content">
                 <div class="analysis-header">
-                    <h2>詳細分析</h2>
+                    <h2>ミニロト詳細分析</h2>
                     <div class="analysis-controls">
                         <button id="run-validation-btn" class="btn btn-primary">
                             <span class="btn-icon">📊</span>
@@ -185,7 +185,7 @@
                 </div>
                 
                 <div id="recent-lottery-results" class="recent-results">
-                    <h3>最近の抽選結果</h3>
+                    <h3>最近のミニロト抽選結果</h3>
                     <div id="recent-results-list">
                         <!-- 最近の抽選結果がここに表示される -->
                     </div>
@@ -195,7 +195,7 @@
             <!-- 設定タブ -->
             <div id="settings-tab" class="tab-content">
                 <div class="settings-section">
-                    <h2>モデル管理</h2>
+                    <h2>ミニロトモデル管理</h2>
                     <div class="model-controls">
                         <button id="train-model-btn" class="btn btn-primary">
                             <span class="btn-icon">🤖</span>
@@ -261,7 +261,7 @@
                     <div class="app-info">
                         <div class="info-item">
                             <span class="info-label">バージョン:</span>
-                            <span class="info-value">1.0.0</span>
+                            <span class="info-value">1.0.0 (ミニロト版)</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">最終更新:</span>
@@ -283,9 +283,9 @@
         <!-- フッター -->
         <footer class="footer">
             <div class="footer-content">
-                <p class="footer-text">© 2025 ロト7予測アプリ - AI機械学習による高精度予測</p>
+                <p class="footer-text">© 2025 ミニロト予測アプリ - AI機械学習による高精度予測</p>
                 <div class="footer-version">
-                    <span id="app-version">v1.0.0</span>
+                    <span id="app-version">v1.0.0 (ミニロト)</span>
                     <span id="update-indicator" class="update-indicator hidden">🔄</span>
                 </div>
             </div>
