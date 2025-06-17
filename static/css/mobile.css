@@ -1,0 +1,520 @@
+/* モバイル最適化スタイル - ロト7予測PWA */
+
+/* タブレット・モバイル共通 */
+@media (max-width: 768px) {
+  /* ヘッダー */
+  .header-content {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  /* ナビゲーション */
+  .nav-tab {
+    padding: var(--spacing-sm) var(--spacing-xs);
+    min-width: 60px;
+  }
+  
+  .tab-icon {
+    font-size: var(--font-size-base);
+  }
+  
+  .tab-text {
+    font-size: 10px;
+  }
+  
+  /* メインコンテンツ */
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+  
+  /* カード */
+  .card {
+    padding: var(--spacing-md);
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  
+  /* ボタングループ */
+  .prediction-actions,
+  .history-controls,
+  .analysis-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .prediction-actions .btn,
+  .history-controls .btn,
+  .analysis-controls .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* 予測結果 */
+  .prediction-set {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+  
+  .set-number {
+    align-self: flex-start;
+    min-width: auto;
+  }
+  
+  .numbers-container {
+    justify-content: center;
+  }
+  
+  .number-ball {
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-size-base);
+  }
+  
+  /* ステータス詳細 */
+  .status-details {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  /* 情報グリッド */
+  .info-grid,
+  .metric-grid,
+  .stats-grid,
+  .accuracy-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  
+  /* 履歴 */
+  .history-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .history-controls {
+    flex-direction: column;
+  }
+  
+  .history-header-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  /* 分析 */
+  .analysis-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  /* 設定 */
+  .model-controls,
+  .history-controls {
+    align-items: stretch;
+  }
+  
+  .model-controls .btn,
+  .history-controls .btn {
+    width: 100%;
+  }
+  
+  /* モーダル */
+  .modal {
+    margin: var(--spacing-md);
+    max-width: calc(100vw - 32px);
+  }
+  
+  /* インストールバナー */
+  .install-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  /* トースト */
+  .toast-container {
+    left: var(--spacing-sm);
+    right: var(--spacing-sm);
+    top: var(--spacing-sm);
+  }
+}
+
+/* スマートフォン特化 */
+@media (max-width: 480px) {
+  /* 基本設定 */
+  html {
+    font-size: 14px;
+  }
+  
+  /* ヘッダー */
+  .header-content {
+    padding: var(--spacing-xs) var(--spacing-md);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .connection-status {
+    display: none; /* スペース節約 */
+  }
+  
+  /* ナビゲーション */
+  .nav-tab {
+    padding: var(--spacing-xs);
+    min-width: 50px;
+  }
+  
+  .tab-text {
+    font-size: 9px;
+  }
+  
+  /* メインコンテンツ */
+  .main-content {
+    padding: var(--spacing-xs);
+  }
+  
+  /* カード */
+  .card {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  /* 予測セット */
+  .prediction-set {
+    padding: var(--spacing-xs);
+  }
+  
+  .number-ball {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-sm);
+  }
+  
+  /* グリッド */
+  .status-details,
+  .info-grid,
+  .metric-grid,
+  .stats-grid,
+  .accuracy-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* 結果サマリー */
+  .result-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* ボタン */
+  .btn {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .btn-large {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  /* フッター */
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .footer-text {
+    font-size: 10px;
+  }
+  
+  /* チャート */
+  .chart-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+  }
+  
+  .chart-label {
+    min-width: auto;
+    text-align: center;
+  }
+}
+
+/* ランドスケープモード（横向き） */
+@media (max-width: 768px) and (orientation: landscape) {
+  .nav-tabs {
+    order: -1; /* ナビを上に */
+  }
+  
+  .main-content {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  /* 数字ボールを小さく */
+  .number-ball {
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-xs);
+  }
+  
+  /* グリッドを横に広げる */
+  .numbers-container {
+    gap: var(--spacing-xs);
+  }
+}
+
+/* 極小画面（古いスマートフォン） */
+@media (max-width: 320px) {
+  /* フォントサイズさらに調整 */
+  html {
+    font-size: 12px;
+  }
+  
+  /* ヘッダー */
+  .app-title {
+    font-size: var(--font-size-sm);
+  }
+  
+  /* ナビゲーション */
+  .tab-text {
+    display: none; /* アイコンのみ表示 */
+  }
+  
+  .nav-tab {
+    min-width: 40px;
+  }
+  
+  /* 数字ボール */
+  .number-ball {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  /* グリッド */
+  .status-details,
+  .info-grid,
+  .metric-grid,
+  .stats-grid,
+  .accuracy-grid,
+  .result-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  /* モーダル */
+  .modal-header,
+  .modal-content,
+  .modal-footer {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* タッチ操作最適化 */
+@media (hover: none) and (pointer: coarse) {
+  /* タッチターゲットのサイズを最適化 */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .nav-tab {
+    min-height: 48px;
+  }
+  
+  .history-item {
+    min-height: 60px;
+  }
+  
+  /* ホバー効果を無効化 */
+  .btn:hover,
+  .nav-tab:hover,
+  .history-item:hover,
+  .card:hover {
+    transform: none;
+    box-shadow: inherit;
+  }
+  
+  /* タップ時のフィードバック */
+  .btn:active,
+  .nav-tab:active,
+  .history-item:active {
+    transform: scale(0.98);
+    transition: transform var(--animation-fast);
+  }
+}
+
+/* ダークモード + モバイル */
+@media (max-width: 768px) {
+  [data-theme="dark"] {
+    /* ダークモードでの視認性向上 */
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.5);
+  }
+  
+  [data-theme="dark"] .number-ball {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  [data-theme="dark"] .prediction-set {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* セーフエリア対応（iPhone X以降） */
+@supports (padding: max(0px)) {
+  .app {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+  
+  .header {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  
+  .footer {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+  
+  .install-banner {
+    padding-bottom: max(var(--spacing-md), env(safe-area-inset-bottom));
+  }
+}
+
+/* アクセシビリティ（動作軽減要求） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高コントラストモード */
+@media (prefers-contrast: high) {
+  :root {
+    --border-width: 2px;
+    --shadow-light: none;
+    --shadow-medium: none;
+  }
+  
+  .btn {
+    border-width: 2px;
+  }
+  
+  .number-ball {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* プリント用スタイル */
+@media print {
+  .header,
+  .nav-tabs,
+  .footer,
+  .install-banner,
+  .modal-overlay,
+  .toast-container {
+    display: none !important;
+  }
+  
+  .main-content {
+    padding: 0;
+  }
+  
+  .card {
+    border: 1px solid #000;
+    margin-bottom: 1rem;
+    break-inside: avoid;
+  }
+  
+  .number-ball {
+    border: 1px solid #000;
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* フォーカス表示（キーボードナビゲーション） */
+.btn:focus-visible,
+.nav-tab:focus-visible,
+.select:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* スクリーンリーダー用 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ローディング状態でのスクロール防止 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+}
+
+[data-theme="dark"] .loading-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* PWA固有のスタイル */
+@media (display-mode: standalone) {
+  /* スタンドアロンモード（PWAとしてインストール済み） */
+  .install-banner {
+    display: none !important;
+  }
+  
+  /* ヘッダーの調整 */
+  .header {
+    padding-top: max(var(--spacing-sm), env(safe-area-inset-top));
+  }
+}
+
+/* ネットワーク状態による表示調整 */
+.offline-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--warning-color);
+  color: white;
+  text-align: center;
+  padding: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  z-index: var(--z-header);
+  transform: translateY(-100%);
+  transition: transform var(--animation-base);
+}
+
+.offline-indicator.show {
+  transform: translateY(0);
+}
+
+/* バイブレーション対応のフィードバック */
+@media (hover: none) and (pointer: coarse) {
+  .btn.vibrate:active {
+    /* タップ時の視覚的フィードバック */
+    background-color: var(--primary-active);
+  }
+}
