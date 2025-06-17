@@ -31,12 +31,11 @@ services:
           type: redis
           name: miniloto-redis
           property: connectionString
-      # ローカルストレージ使用（ダウンロード/アップロード対応）
+      # ローカルストレージ使用
       - key: USE_LOCAL_STORAGE
         value: "true"
       - key: DATA_DIR
         value: /tmp/miniloto_data
-    # disk削除（無料枠では使用不可）
     healthCheckPath: /
     autoDeploy: true
     region: oregon
@@ -56,7 +55,7 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Celery設定（Redis有料枠使用）
+      # Celery設定
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
@@ -77,13 +76,16 @@ services:
         value: "true"
       - key: DATA_DIR
         value: /tmp/miniloto_data
-    # disk削除（無料枠では使用不可）
     autoDeploy: true
     region: oregon
 
-  # Redis（有料枠使用）
+  # Redis（有料枠・IP許可リスト付き）
   - type: redis
     name: miniloto-redis
-    plan: standard
+    plan: starter  # 有料枠最安プラン
     region: oregon
     maxmemoryPolicy: allkeys-lru
+    # IP許可リスト設定
+    ipAllowList:
+      - source: 0.0.0.0/0  # 全IP許可（一時的）
+        description: "Temporary allow all IPs"
