@@ -653,3 +653,99 @@ window.addEventListener('load', () => {
         }
     }, 1000); // 1秒待機してから実行
 });
+
+// main.js の末尾に追加
+
+// === UIインスタンス自動作成 ===
+function ensureUIInstance() {
+    console.log('🔍 UIインスタンス確認中...');
+    
+    if (typeof window.UI === 'function') {
+        if (!window.ui) {
+            try {
+                console.log('🔨 UIインスタンス自動作成中...');
+                window.ui = new window.UI();
+                console.log('✅ UIインスタンス自動作成成功');
+                
+                // デバッグシステムにログ
+                if (window.emergencyDebug) {
+                    window.emergencyDebug.addLog('UIインスタンスを自動作成しました', 'success');
+                } else if (window.mobileDebug) {
+                    window.mobileDebug.addLog('UIインスタンスを自動作成しました', 'success');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ UIインスタンス自動作成失敗:', error);
+                
+                // デバッグシステムにエラーログ
+                if (window.emergencyDebug) {
+                    window.emergencyDebug.addLog(`UIインスタンス作成失敗: ${error.message}`, 'error');
+                } else if (window.mobileDebug) {
+                    window.mobileDebug.addLog(`UIインスタンス作成失敗: ${error.message}`, 'error');
+                }
+                
+                return false;
+            }
+        } else {
+            console.log('✅ UIインスタンス既に存在');
+            return true;
+        }
+    } else {
+        console.log('⚠️ UIクラスがまだ読み込まれていません');
+        return false;
+    }
+}
+
+// 複数のタイミングでUIインスタンス作成を試行
+function setupUIInstanceCreation() {
+    // 1. DOM読み込み完了時
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(ensureUIInstance, 1000);
+        });
+    } else {
+        setTimeout(ensureUIInstance, 1000);
+    }
+    
+    // 2. ページ読み込み完了時
+    if (document.readyState === 'complete') {
+        setTimeout(ensureUIInstance, 2000);
+    } else {
+        window.addEventListener('load', () => {
+            setTimeout(ensureUIInstance, 2000);
+        });
+    }
+    
+    // 3. 定期チェック（最大5回）
+    let checkCount = 0;
+    const maxChecks = 5;
+    const checkInterval = setInterval(() => {
+        checkCount++;
+        
+        if (ensureUIInstance() || checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            
+            if (checkCount >= maxChecks && !window.ui) {
+                console.log('🚨 UIインスタンス作成の最大試行回数に達しました');
+                
+                // 最後の手段：手動でui.js読み込み
+                const script = document.createElement('script');
+                script.src = '/static/js/ui.js?t=' + Date.now();
+                script.onload = () => {
+                    console.log('🔄 ui.js 緊急再読み込み成功');
+                    setTimeout(ensureUIInstance, 500);
+                };
+                script.onerror = () => {
+                    console.error('🚨 ui.js 緊急再読み込み失敗');
+                };
+                document.head.appendChild(script);
+            }
+        }
+    }, 3000); // 3秒間隔
+}
+
+// 即座に実行
+setupUIInstanceCreation();
+
+console.log('🔧 UIインスタンス自動作成システムを開始しました');

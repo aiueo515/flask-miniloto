@@ -118,57 +118,217 @@ class EmergencyDebugSystem {
         this.filterEnabled = true;
     }
     
-    createDebugButtons() {
-        // メインデバッグボタン
-        const mainBtn = document.createElement('button');
-        mainBtn.id = 'main-debug-btn';
-        mainBtn.innerHTML = '🔧';
-        mainBtn.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 28px;
-            background: linear-gradient(135deg, #FF5722, #FF9800);
-            border: none;
-            color: white;
-            font-size: 24px;
-            z-index: 999998;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(255, 87, 34, 0.4);
-            transition: all 0.3s ease;
-        `;
-        mainBtn.onmouseover = () => mainBtn.style.transform = 'scale(1.1)';
-        mainBtn.onmouseout = () => mainBtn.style.transform = 'scale(1)';
-        mainBtn.onclick = () => this.toggle();
-        document.body.appendChild(mainBtn);
+
+createDebugButtons() {
+    // メインデバッグボタン
+    const mainBtn = document.createElement('button');
+    mainBtn.id = 'main-debug-btn';
+    mainBtn.innerHTML = '🔧';
+    mainBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, #FF5722, #FF9800);
+        border: none;
+        color: white;
+        font-size: 24px;
+        z-index: 999998;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(255, 87, 34, 0.4);
+        transition: all 0.3s ease;
+    `;
+    mainBtn.onmouseover = () => mainBtn.style.transform = 'scale(1.1)';
+    mainBtn.onmouseout = () => mainBtn.style.transform = 'scale(1)';
+    mainBtn.onclick = () => this.toggle();
+    document.body.appendChild(mainBtn);
+    
+    // サブデバッグボタン（緊急診断）
+    const subBtn = document.createElement('button');
+    subBtn.id = 'sub-debug-btn';
+    subBtn.innerHTML = '🆘';
+    subBtn.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #9C27B0, #E91E63);
+        border: none;
+        color: white;
+        font-size: 20px;
+        z-index: 999998;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(156, 39, 176, 0.4);
+        transition: all 0.3s ease;
+    `;
+    subBtn.onmouseover = () => subBtn.style.transform = 'scale(1.1)';
+    subBtn.onmouseout = () => subBtn.style.transform = 'scale(1)';
+    subBtn.onclick = () => this.runEmergencyDiag();
+    document.body.appendChild(subBtn);
+    
+    // 🔧 修正ボタン（スマホ用修正）
+    const fixBtn = document.createElement('button');
+    fixBtn.id = 'fix-debug-btn';
+    fixBtn.innerHTML = '🔨';
+    fixBtn.title = 'スマホ用修正';
+    fixBtn.style.cssText = `
+        position: fixed;
+        bottom: 160px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #4CAF50, #8BC34A);
+        border: none;
+        color: white;
+        font-size: 18px;
+        z-index: 999998;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(76, 175, 80, 0.4);
+        transition: all 0.3s ease;
+    `;
+    fixBtn.onmouseover = () => fixBtn.style.transform = 'scale(1.1)';
+    fixBtn.onmouseout = () => fixBtn.style.transform = 'scale(1)';
+    
+    // 🔧 修正機能の実装
+    fixBtn.onclick = () => {
+        console.log('🔧 スマホ用修正実行中...');
+        this.addLog('スマホ用修正を開始します...', 'info');
         
-        // サブデバッグボタン
-        const subBtn = document.createElement('button');
-        subBtn.id = 'sub-debug-btn';
-        subBtn.innerHTML = '🆘';
-        subBtn.style.cssText = `
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 48px;
-            height: 48px;
-            border-radius: 24px;
-            background: linear-gradient(135deg, #9C27B0, #E91E63);
-            border: none;
-            color: white;
-            font-size: 20px;
-            z-index: 999998;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(156, 39, 176, 0.4);
-            transition: all 0.3s ease;
-        `;
-        subBtn.onmouseover = () => subBtn.style.transform = 'scale(1.1)';
-        subBtn.onmouseout = () => subBtn.style.transform = 'scale(1)';
-        subBtn.onclick = () => this.runEmergencyDiag();
-        document.body.appendChild(subBtn);
-    }
+        // 1. スクロール修正
+        const panel = document.getElementById('emergency-debug-panel');
+        if (panel) {
+            panel.style.position = 'fixed';
+            panel.style.top = '5px';
+            panel.style.left = '5px';
+            panel.style.right = '5px';
+            panel.style.bottom = '5px';
+            panel.style.overflow = 'hidden';
+            panel.style.display = 'flex';
+            panel.style.flexDirection = 'column';
+            
+            const logsContainer = panel.querySelector('#debug-logs');
+            if (logsContainer) {
+                logsContainer.style.flex = '1';
+                logsContainer.style.overflowY = 'auto';
+                logsContainer.style.overflowX = 'hidden';
+                logsContainer.style.webkitOverflowScrolling = 'touch';
+                logsContainer.style.touchAction = 'pan-y';
+                logsContainer.style.maxHeight = 'none';
+                logsContainer.style.height = 'auto';
+                logsContainer.style.fontSize = '9px';
+                logsContainer.style.lineHeight = '1.2';
+                logsContainer.style.padding = '8px';
+                logsContainer.style.background = 'rgba(0,0,0,0.8)';
+                logsContainer.style.borderRadius = '6px';
+                logsContainer.style.wordWrap = 'break-word';
+                logsContainer.style.whiteSpace = 'pre-wrap';
+                
+                this.addLog('ログエリアスクロール修正完了', 'success');
+                
+                setTimeout(() => {
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                }, 100);
+            }
+            
+            // ヘッダーをコンパクト化
+            const header = panel.querySelector('div:first-child');
+            if (header) {
+                header.style.flexShrink = '0';
+                header.style.height = '50px';
+                header.style.marginBottom = '8px';
+                
+                const title = header.querySelector('h3');
+                if (title) {
+                    title.textContent = '🚀 ミニロト デバッグ';
+                    title.style.fontSize = '14px';
+                }
+                
+                const buttons = header.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.style.padding = '2px 4px';
+                    btn.style.fontSize = '8px';
+                    btn.style.margin = '0 1px';
+                });
+            }
+            
+            // 中間エリアを非表示
+            const statusArea = panel.querySelector('div:nth-child(2)');
+            if (statusArea) {
+                statusArea.style.display = 'none';
+            }
+            
+            // ログコントロールをコンパクト化
+            const logControls = panel.querySelector('div:nth-last-child(2)');
+            if (logControls) {
+                logControls.style.flexShrink = '0';
+                logControls.style.height = '25px';
+                logControls.style.marginBottom = '8px';
+                
+                const controlButtons = logControls.querySelectorAll('button');
+                controlButtons.forEach(btn => {
+                    btn.style.padding = '1px 4px';
+                    btn.style.fontSize = '7px';
+                });
+            }
+        }
+        
+        // 2. UI修正
+        this.addLog('UI修正を実行中...', 'info');
+        
+        if (typeof window.UI === 'function') {
+            if (!window.ui) {
+                try {
+                    this.addLog('UIインスタンス作成中...', 'info');
+                    window.ui = new window.UI();
+                    this.addLog('UIインスタンス作成成功', 'success');
+                } catch (error) {
+                    this.addLog(`UIインスタンス作成失敗: ${error.message}`, 'error');
+                }
+            } else {
+                this.addLog('UIインスタンス既に存在', 'info');
+            }
+        } else {
+            this.addLog('UIクラスが見つかりません', 'error');
+            
+            const script = document.createElement('script');
+            script.src = '/static/js/ui.js?t=' + Date.now();
+            script.onload = () => {
+                this.addLog('ui.js 手動読み込み成功', 'success');
+                setTimeout(() => {
+                    if (window.UI && !window.ui) {
+                        try {
+                            window.ui = new window.UI();
+                            this.addLog('UIインスタンス手動作成成功', 'success');
+                        } catch (error) {
+                            this.addLog(`UIインスタンス手動作成失敗: ${error.message}`, 'error');
+                        }
+                    }
+                }, 500);
+            };
+            script.onerror = () => {
+                this.addLog('ui.js 手動読み込み失敗', 'error');
+            };
+            document.head.appendChild(script);
+        }
+        
+        // 3. スマホ用操作ボタン作成
+        this.createMobileControls();
+        
+        // 4. 修正完了
+        setTimeout(() => {
+            this.addLog('スマホ用修正が完了しました', 'success');
+            this.addLog('ログエリアをタッチしてスクロールしてみてください', 'info');
+        }, 500);
+    };
+    
+    document.body.appendChild(fixBtn);
+}
+
     
     setupConsoleInterception() {
         // 元のコンソール関数を保存
@@ -577,6 +737,86 @@ class EmergencyDebugSystem {
         
         this.addLog('ログをエクスポートしました', 'success');
     }
+
+// EmergencyDebugSystem クラスの exportLogs() メソッドの後に追加
+
+createMobileControls() {
+    // 既存のコントロールを削除
+    const existing = document.getElementById('mobile-debug-controls');
+    if (existing) existing.remove();
+    
+    // 新しいコントロールパネル作成
+    const controls = document.createElement('div');
+    controls.id = 'mobile-debug-controls';
+    controls.style.cssText = `
+        position: fixed;
+        bottom: 5px;
+        left: 5px;
+        right: 5px;
+        height: 50px;
+        background: rgba(0,0,0,0.9);
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 999997;
+        padding: 5px;
+        border: 1px solid rgba(255,255,255,0.2);
+    `;
+    
+    // ボタン作成関数
+    const createBtn = (emoji, text, color, action) => {
+        const btn = document.createElement('button');
+        btn.innerHTML = `${emoji}<br><span style="font-size:8px;">${text}</span>`;
+        btn.style.cssText = `
+            width: 50px;
+            height: 40px;
+            background: ${color};
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        `;
+        btn.onclick = action;
+        return btn;
+    };
+    
+    // ボタン群
+    const clearBtn = createBtn('🗑️', 'クリア', '#FF9800', () => {
+        this.clearLogs();
+    });
+    
+    const diagBtn = createBtn('🔍', '診断', '#2196F3', () => {
+        this.runQuickDiag();
+    });
+    
+    const scrollBtn = createBtn('📜', '最下部', '#9C27B0', () => {
+        const logsContainer = document.querySelector('#debug-logs');
+        if (logsContainer) {
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+    });
+    
+    const closeBtn = createBtn('✖️', '閉じる', '#f44336', () => {
+        this.hide();
+        controls.remove();
+    });
+    
+    controls.appendChild(clearBtn);
+    controls.appendChild(diagBtn);
+    controls.appendChild(scrollBtn);
+    controls.appendChild(closeBtn);
+    
+    document.body.appendChild(controls);
+    this.addLog('スマホ用操作ボタンを追加しました', 'success');
+}
+
 }
 
 // ===== 2. 自動初期化システム =====
