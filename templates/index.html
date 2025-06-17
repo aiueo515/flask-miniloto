@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1890ff">
+    <meta name="description" content="AI機械学習による高精度なロト7予測アプリ">
+    
+    <!-- PWA設定 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ロト7予測">
+    
+    <!-- アイコン設定 -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192x192.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/mobile.css">
+    <link rel="stylesheet" href="/static/css/mobile-final.css">
+    
+    <!-- フォント -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <title>ロト7予測 - AI機械学習予測アプリ</title>
+</head>
+<body>
+    <!-- PWAインストールバナー -->
+    <div id="install-banner" class="install-banner hidden">
+        <div class="install-content">
+            <h4>📱 アプリをインストール</h4>
+            <p>ホーム画面に追加してより便利に！</p>
+            <div class="install-actions">
+                <button id="install-btn" class="btn btn-primary">インストール</button>
+                <button id="install-dismiss" class="btn btn-secondary">後で</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインアプリケーション -->
+    <div id="app" class="app">
+        <!-- ヘッダー -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">🎯 ロト7予測</h1>
+                    <div class="connection-status" id="connection-status">
+                        <span class="status-indicator online"></span>
+                        <span class="status-text">オンライン</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button id="refresh-btn" class="btn btn-icon" title="更新">
+                        <span class="icon">🔄</span>
+                    </button>
+                    <button id="menu-btn" class="btn btn-icon" title="メニュー">
+                        <span class="icon">☰</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ナビゲーション -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="predict">
+                <span class="tab-icon">🎲</span>
+                <span class="tab-text">予測</span>
+            </button>
+            <button class="nav-tab" data-tab="history">
+                <span class="tab-icon">📊</span>
+                <span class="tab-text">履歴</span>
+            </button>
+            <button class="nav-tab" data-tab="analysis">
+                <span class="tab-icon">🔍</span>
+                <span class="tab-text">分析</span>
+            </button>
+            <button class="nav-tab" data-tab="settings">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-text">設定</span>
+            </button>
+        </nav>
+
+        <!-- メインコンテンツ -->
+        <main class="main-content">
+            <!-- 予測タブ -->
+            <div id="predict-tab" class="tab-content active">
+                <!-- システムステータス -->
+                <div class="status-card" id="system-status">
+                    <div class="status-header">
+                        <h3>システム状態</h3>
+                        <div class="status-indicator" id="system-indicator">
+                            <span class="dot"></span>
+                            <span class="text">初期化中...</span>
+                        </div>
+                    </div>
+                    <div class="status-details" id="status-details">
+                        <!-- ステータス詳細がここに表示される -->
+                    </div>
+                </div>
+
+                <!-- 次回予測 -->
+                <div class="prediction-card" id="prediction-card">
+                    <div class="card-header">
+                        <h2 id="prediction-title">次回予測を取得中...</h2>
+                        <div class="prediction-actions">
+                            <button id="get-prediction-btn" class="btn btn-primary" disabled>
+                                <span class="btn-icon">🎯</span>
+                                予測取得
+                            </button>
+                            <button id="refresh-prediction-btn" class="btn btn-secondary" disabled>
+                                <span class="btn-icon">🔄</span>
+                                更新
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="prediction-loading" class="loading hidden">
+                        <div class="loading-spinner"></div>
+                        <p>予測を生成中...</p>
+                    </div>
+                    
+                    <div id="prediction-results" class="prediction-results hidden">
+                        <!-- 予測結果がここに表示される -->
+                    </div>
+                    
+                    <div id="prediction-info" class="prediction-info hidden">
+                        <!-- 予測情報がここに表示される -->
+                    </div>
+                </div>
+
+                <!-- 前回結果 -->
+                <div class="previous-results" id="previous-results">
+                    <!-- 前回の結果がここに表示される -->
+                </div>
+            </div>
+
+            <!-- 履歴タブ -->
+            <div id="history-tab" class="tab-content">
+                <div class="history-header">
+                    <h2>予測履歴</h2>
+                    <div class="history-controls">
+                        <select id="history-count" class="select">
+                            <option value="5">最新5件</option>
+                            <option value="10">最新10件</option>
+                            <option value="20">最新20件</option>
+                        </select>
+                        <button id="refresh-history-btn" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span>
+                            更新
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="accuracy-summary" class="accuracy-summary">
+                    <!-- 精度サマリーがここに表示される -->
+                </div>
+                
+                <div id="history-list" class="history-list">
+                    <!-- 履歴一覧がここに表示される -->
+                </div>
+            </div>
+
+            <!-- 分析タブ -->
+            <div id="analysis-tab" class="tab-content">
+                <div class="analysis-header">
+                    <h2>詳細分析</h2>
+                    <div class="analysis-controls">
+                        <button id="run-validation-btn" class="btn btn-primary">
+                            <span class="btn-icon">📊</span>
+                            時系列検証実行
+                        </button>
+                        <button id="run-learning-btn" class="btn btn-secondary">
+                            <span class="btn-icon">🧠</span>
+                            学習改善実行
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="analysis-results" class="analysis-results">
+                    <!-- 分析結果がここに表示される -->
+                </div>
+                
+                <div id="recent-lottery-results" class="recent-results">
+                    <h3>最近の抽選結果</h3>
+                    <div id="recent-results-list">
+                        <!-- 最近の抽選結果がここに表示される -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 設定タブ -->
+            <div id="settings-tab" class="tab-content">
+                <div class="settings-section">
+                    <h2>モデル管理</h2>
+                    <div class="model-controls">
+                        <button id="train-model-btn" class="btn btn-primary">
+                            <span class="btn-icon">🤖</span>
+                            モデル学習実行
+                        </button>
+                        <button id="download-model-btn" class="btn btn-secondary">
+                            <span class="btn-icon">💾</span>
+                            モデルダウンロード
+                        </button>
+                        <div class="upload-section">
+                            <label for="model-upload" class="btn btn-secondary">
+                                <span class="btn-icon">📂</span>
+                                モデルアップロード
+                            </label>
+                            <input type="file" id="model-upload" accept=".pkl" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>履歴管理</h2>
+                    <div class="history-controls">
+                        <button id="download-history-btn" class="btn btn-secondary">
+                            <span class="btn-icon">💾</span>
+                            履歴ダウンロード
+                        </button>
+                        <div class="upload-section">
+                            <label for="history-upload" class="btn btn-secondary">
+                                <span class="btn-icon">📂</span>
+                                履歴アップロード
+                            </label>
+                            <input type="file" id="history-upload" accept=".csv" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>アプリ設定</h2>
+                    <div class="app-settings">
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="dark-mode-toggle">
+                                <span class="setting-text">ダークモード</span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="auto-refresh-toggle" checked>
+                                <span class="setting-text">自動更新</span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="notifications-toggle">
+                                <span class="setting-text">通知（開発中）</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>アプリ情報</h2>
+                    <div class="app-info">
+                        <div class="info-item">
+                            <span class="info-label">バージョン:</span>
+                            <span class="info-value">1.0.0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">最終更新:</span>
+                            <span class="info-value" id="last-update">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">キャッシュサイズ:</span>
+                            <span class="info-value" id="cache-size">-</span>
+                        </div>
+                    </div>
+                    <button id="clear-cache-btn" class="btn btn-danger">
+                        <span class="btn-icon">🗑️</span>
+                        キャッシュクリア
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- フッター -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p class="footer-text">© 2025 ロト7予測アプリ - AI機械学習による高精度予測</p>
+                <div class="footer-version">
+                    <span id="app-version">v1.0.0</span>
+                    <span id="update-indicator" class="update-indicator hidden">🔄</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- モーダル -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">タイトル</h3>
+                <button id="modal-close" class="btn btn-icon">✕</button>
+            </div>
+            <div class="modal-content" id="modal-content">
+                <!-- モーダルコンテンツ -->
+            </div>
+            <div class="modal-footer" id="modal-footer">
+                <!-- モーダルフッター -->
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast-container" class="toast-container">
+        <!-- トースト通知がここに表示される -->
+    </div>
+
+<!-- JavaScriptファイル読み込み（順序重要） -->
+    <script>
+        // スクリプト読み込み追跡
+        window.scriptStatus = {};
+        function trackScript(name, success) {
+            window.scriptStatus[name] = success;
+            console.log(`${success ? '✅' : '❌'} ${name} ${success ? '読み込み成功' : '読み込み失敗'}`);
+        }
+    </script>
+    
+    <!-- 1. API（基本機能） -->
+    <script src="/static/js/api.js" 
+            onload="trackScript('api.js', true)" 
+            onerror="trackScript('api.js', false)"></script>
+    
+    <!-- 2. UI（コア機能） -->
+    <script src="/static/js/ui.js" 
+            onload="trackScript('ui.js', true)" 
+            onerror="trackScript('ui.js', false)"></script>
+    
+    <!-- 3. Main（アプリケーション制御）- UIクラス読み込み後 -->
+    <script src="/static/js/main.js" 
+            onload="trackScript('main.js', true)" 
+            onerror="trackScript('main.js', false)"></script>
+    
+    <!-- 4. 拡張機能（UIクラス依存） -->
+    <script src="/static/js/analysis.js" 
+            onload="trackScript('analysis.js', true)" 
+            onerror="trackScript('analysis.js', false)"></script>
+    
+    <!-- 5. PWA・モバイル（独立機能） -->
+    <script src="/static/js/pwa.js" 
+            onload="trackScript('pwa.js', true)" 
+            onerror="trackScript('pwa.js', false)"></script>
+    <script src="/static/js/mobile.js" 
+            onload="trackScript('mobile.js', true)" 
+            onerror="trackScript('mobile.js', false)"></script>
+</body>
+
+</html>
