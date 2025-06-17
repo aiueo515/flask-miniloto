@@ -497,8 +497,283 @@ window.addEventListener('load', () => {
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 ">🆘</button>
 
-</body>
-</html>
+<!-- index.html の </body> 直前に追加する緊急修正版 -->
+
+<!-- 🚀 完全統合デバッグシステム（最優先読み込み） -->
+<script>
+console.log('🔧 緊急デバッグローダー開始...');
+
+// 1. 即座に利用可能な緊急デバッグ関数
+window.emergencyShow = function() {
+    console.log('🚨 緊急デバッグ表示要求');
+    if (window.emergencyDebug) {
+        window.emergencyDebug.show();
+    } else if (window.mobileDebug) {
+        window.mobileDebug.toggle();
+    } else {
+        alert('デバッグシステムまだ読み込み中...');
+        // 強制初期化を試行
+        setTimeout(() => {
+            if (window.forceInitializeDebugSystem) {
+                window.forceInitializeDebugSystem();
+            }
+        }, 1000);
+    }
+};
+
+// 2. 緊急情報表示
+window.emergencyInfo = function() {
+    const info = `
+デバッグ情報:
+- 画面: ${window.innerWidth}×${window.innerHeight}
+- オンライン: ${navigator.onLine}
+- UA: ${navigator.userAgent.substring(0, 50)}...
+- 時刻: ${new Date().toLocaleString()}
+- emergencyDebug: ${typeof window.emergencyDebug}
+- mobileDebug: ${typeof window.mobileDebug}
+- API: ${typeof window.API}
+- UI: ${typeof window.UI}
+    `;
+    
+    console.log(info);
+    alert(info);
+};
+
+// 3. スクリプト読み込み状況追跡（改良版）
+window.scriptLoadStatus = window.scriptLoadStatus || {
+    loaded: [],
+    failed: [],
+    total: 0,
+    debugSystemAttempted: false
+};
+
+function trackScript(scriptName, success) {
+    window.scriptLoadStatus.total++;
+    if (success) {
+        window.scriptLoadStatus.loaded.push(scriptName);
+        console.log(`✅ ${scriptName} 読み込み成功`);
+    } else {
+        window.scriptLoadStatus.failed.push(scriptName);
+        console.error(`❌ ${scriptName} 読み込み失敗`);
+    }
+    
+    console.log(`📊 読み込み状況: ${window.scriptLoadStatus.loaded.length}成功 / ${window.scriptLoadStatus.failed.length}失敗`);
+    
+    // デバッグシステムの強制起動チェック
+    checkAndForceDebugSystem();
+}
+
+function checkAndForceDebugSystem() {
+    const totalAttempted = window.scriptLoadStatus.loaded.length + window.scriptLoadStatus.failed.length;
+    
+    // 3つ以上のスクリプト読み込みが完了し、まだデバッグシステムを試行していない場合
+    if (totalAttempted >= 3 && !window.scriptLoadStatus.debugSystemAttempted) {
+        window.scriptLoadStatus.debugSystemAttempted = true;
+        
+        console.log('🔧 デバッグシステム自動起動チェック...');
+        
+        setTimeout(() => {
+            if (!window.emergencyDebug && !window.mobileDebug) {
+                console.log('🚨 デバッグシステム未検出 - 強制初期化実行');
+                if (window.forceInitializeDebugSystem) {
+                    window.forceInitializeDebugSystem();
+                } else {
+                    console.log('🔧 強制初期化関数も未検出 - 緊急ボタンのみ表示');
+                    createEmergencyButton();
+                }
+            } else {
+                console.log('✅ デバッグシステム検出済み');
+            }
+        }, 1000);
+    }
+}
+
+// 4. 緊急ボタン作成（最後の手段）
+function createEmergencyButton() {
+    // 既存のボタンがあるかチェック
+    if (document.getElementById('emergency-final-btn')) return;
+    
+    const btn = document.createElement('button');
+    btn.id = 'emergency-final-btn';
+    btn.innerHTML = '🆘';
+    btn.title = '緊急デバッグ';
+    btn.style.cssText = `
+        position: fixed;
+        bottom: 160px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 30px;
+        background: radial-gradient(circle, #e91e63, #ad1457);
+        border: 3px solid white;
+        color: white;
+        font-size: 24px;
+        z-index: 999999;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(233, 30, 99, 0.6);
+        animation: pulse 2s infinite;
+    `;
+    
+    // パルスアニメーション
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    btn.onclick = function() {
+        window.emergencyInfo();
+        
+        // デバッグファイルの手動読み込みを試行
+        const script = document.createElement('script');
+        script.src = '/static/js/debug-complete.js?t=' + Date.now();
+        script.onload = () => {
+            console.log('🔧 デバッグスクリプト手動読み込み成功');
+            setTimeout(() => {
+                if (window.emergencyDebug) {
+                    window.emergencyDebug.show();
+                    btn.remove();
+                }
+            }, 500);
+        };
+        script.onerror = () => {
+            console.error('❌ デバッグスクリプト手動読み込み失敗');
+            alert('デバッグスクリプトの読み込みに失敗しました。開発者ツールのコンソールを確認してください。');
+        };
+        document.head.appendChild(script);
+    };
+    
+    document.body.appendChild(btn);
+    console.log('🆘 緊急ボタンを作成しました');
+}
+
+// 5. 段階的初期化チェック
+let initCheckCount = 0;
+function periodicDebugCheck() {
+    initCheckCount++;
+    console.log(`🔍 定期チェック ${initCheckCount}: デバッグシステム状況確認`);
+    
+    if (window.emergencyDebug) {
+        console.log('✅ emergencyDebug 検出済み');
+        return;
+    }
+    
+    if (window.mobileDebug && typeof window.mobileDebug.toggle === 'function') {
+        console.log('✅ mobileDebug 検出済み');
+        return;
+    }
+    
+    console.log('⚠️ デバッグシステム未検出');
+    
+    if (initCheckCount >= 3) {
+        console.log('🚨 3回チェックしてもデバッグシステム未検出 - 緊急ボタン作成');
+        createEmergencyButton();
+    } else {
+        // 次のチェック予約
+        setTimeout(periodicDebugCheck, 2000);
+    }
+}
+
+// 最初のチェックを予約
+setTimeout(periodicDebugCheck, 3000);
+
+console.log('🔧 緊急デバッグローダー設定完了');
+</script>
+
+<!-- 完全統合デバッグシステム読み込み -->
+<script src="/static/js/debug-complete.js" 
+        onload="console.log('✅ 完全デバッグシステム読み込み成功'); trackScript('debug-complete.js', true);" 
+        onerror="console.error('❌ 完全デバッグシステム読み込み失敗'); trackScript('debug-complete.js', false);"></script>
+
+<!-- 既存のスクリプト読み込み（改良版） -->
+<!-- 1. API（基本機能） -->
+<script src="/static/js/api.js" 
+        onload="trackScript('api.js', true)" 
+        onerror="trackScript('api.js', false)"></script>
+
+<!-- 2. UI（コア機能） -->
+<script src="/static/js/ui.js" 
+        onload="trackScript('ui.js', true)" 
+        onerror="trackScript('ui.js', false)"></script>
+
+<!-- 3. Main（アプリケーション制御） -->
+<script src="/static/js/main.js" 
+        onload="trackScript('main.js', true)" 
+        onerror="trackScript('main.js', false)"></script>
+
+<!-- 4. 拡張機能 -->
+<script src="/static/js/analysis.js" 
+        onload="trackScript('analysis.js', true)" 
+        onerror="trackScript('analysis.js', false)"></script>
+
+<!-- 5. PWA機能 -->
+<script src="/static/js/pwa.js" 
+        onload="trackScript('pwa.js', true)" 
+        onerror="trackScript('pwa.js', false)"></script>
+
+<!-- 6. モバイル最適化 -->
+<script src="/static/js/mobile.js" 
+        onload="trackScript('mobile.js', true)" 
+        onerror="trackScript('mobile.js', false)"></script>
+
+<!-- 最終安全確認スクリプト -->
+<script>
+window.addEventListener('load', function() {
+    console.log('🏁 ページ読み込み完了 - 最終デバッグシステムチェック');
+    
+    setTimeout(function() {
+        let debugSystemAvailable = false;
+        
+        if (window.emergencyDebug && typeof window.emergencyDebug.show === 'function') {
+            debugSystemAvailable = true;
+            console.log('✅ emergencyDebug 利用可能');
+        }
+        
+        if (window.mobileDebug && typeof window.mobileDebug.toggle === 'function') {
+            debugSystemAvailable = true;
+            console.log('✅ mobileDebug 利用可能');
+        }
+        
+        if (!debugSystemAvailable) {
+            console.log('🚨 最終チェックでもデバッグシステム未検出');
+            createEmergencyButton();
+        } else {
+            console.log('🎉 デバッグシステム正常に利用可能');
+            
+            // 成功時は緊急ボタンを削除
+            const emergencyBtn = document.getElementById('emergency-final-btn');
+            if (emergencyBtn) {
+                emergencyBtn.remove();
+            }
+        }
+    }, 2000);
+});
+
+// 手動実行用のグローバル関数
+window.testDebug = function() {
+    console.log('🧪 デバッグテスト実行...');
+    
+    console.log('emergencyDebug:', typeof window.emergencyDebug);
+    console.log('mobileDebug:', typeof window.mobileDebug);
+    console.log('forceInitializeDebugSystem:', typeof window.forceInitializeDebugSystem);
+    
+    if (window.emergencyDebug) {
+        window.emergencyDebug.show();
+    } else if (window.mobileDebug) {
+        window.mobileDebug.toggle();
+    } else if (window.forceInitializeDebugSystem) {
+        window.forceInitializeDebugSystem();
+    } else {
+        alert('デバッグシステムが利用できません');
+    }
+};
+
+console.log('🎯 手動テスト用: window.testDebug() を実行してください');
+</script>
 
 </body>
 
