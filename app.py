@@ -3,13 +3,14 @@ Flask-based Loto7 Prediction API
 非同期対応・超軽量初期化・メモリ最適化版
 """
 
-from flask import Flask, request, jsonify, send_file, send_from_directory, render_template
+from flask import Flask, request, jsonify, send_file, send_from_directory, render_template, make_response
 from flask_cors import CORS
 import os
 import json
 import traceback
 import gc
 import psutil
+import pandas as pd
 from datetime import datetime
 import logging
 
@@ -184,28 +185,7 @@ def index():
         else:
             return f"Error: {str(e)}", 500
 
-# 🔥 非同期API: 重いコンポーネント初期化
-@app.route('/api/init_heavy', methods=['POST'])
-def init_heavy_async():
-    """重いコンポーネントの非同期初期化"""
-    try:
-        # 非同期タスクを開始
-        task = tasks.heavy_init_task.delay()
-        
-        return create_success_response({
-            'task_id': task.id,
-            'status': 'started',
-            'message': '重いコンポーネントの初期化を開始しました'
-        }, "初期化タスクを開始しました")
-        
-    except Exception as e:
-        logger.error(f"重い初期化API開始エラー: {e}")
-        return create_error_response(f"初期化タスクの開始に失敗しました: {str(e)}", 500)
-
-# app.py に追加する修正パッチ
-# 既存の predict_async() の上に以下を追加してください
-
-# 🔧 予測API修正版（POSTメソッド対応）
+# 🔧 予測API修正版（GET/POST両対応）
 @app.route('/api/predict', methods=['GET', 'POST'])
 def predict_unified():
     """統合予測API（GET/POST両対応）"""
@@ -255,7 +235,7 @@ def predict_unified():
         logger.error(f"予測API エラー: {e}")
         return create_error_response(f"予測開始に失敗しました: {str(e)}", 500)
 
-# 🔧 初期化API修正版（POSTメソッド対応）
+# 🔧 初期化API修正版（GET/POST両対応）
 @app.route('/api/init_heavy', methods=['GET', 'POST'])
 def init_heavy_unified():
     """統合初期化API（GET/POST両対応）"""
@@ -373,34 +353,66 @@ def get_system_debug_info():
         logger.error(f"システムデバッグ情報取得エラー: {e}")
         return create_error_response(f"デバッグ情報取得に失敗しました: {str(e)}", 500)
 
-# 🔥 非同期API: 予測生成
-@app.route('/api/predict', methods=['GET'])
-def predict_async():
-    """非同期予測生成"""
+# === 追加: Service Worker修正用の診断機能 ===
+@app.route('/api/debug/service_worker', methods=['GET'])
+def debug_service_worker():
+    """Service Worker デバッグ情報"""
     try:
-        # リクエストパラメータ
-        force_async = request.args.get('async', 'true').lower() == 'true'
+        debug_info = {
+            'timestamp': datetime.now().isoformat(),
+            'server_methods_supported': {
+                'GET': True,
+                'POST': True, 
+                'HEAD': True,
+                'OPTIONS': True
+            },
+            'available_endpoints': [
+                '/api/predict',
+                '/api/init_heavy', 
+                '/api/network_test',
+                '/api/system_debug',
+                '/api/status'
+            ],
+            'cors_enabled': True,
+            'request_info': {
+                'method': request.method,
+                'headers': dict(request.headers),
+                'path': request.path,
+                'args': dict(request.args)
+            }
+        }
         
-        if not force_async:
-            # 🔥 同期モードは非推奨の警告を返す
-            return create_error_response(
-                "同期モードは非推奨です。async=true パラメータを使用してください", 
-                400
-            )
-        
-        # 非同期タスクを開始
-        task = tasks.predict_task.delay()
-        
-        return create_success_response({
-            'task_id': task.id,
-            'status': 'started',
-            'message': '予測生成を開始しました',
-            'estimated_time': '30-60秒'
-        }, "予測タスクを開始しました")
+        return create_success_response(debug_info, "Service Worker デバッグ情報")
         
     except Exception as e:
-        logger.error(f"非同期予測API開始エラー: {e}")
-        return create_error_response(f"予測タスクの開始に失敗しました: {str(e)}", 500)
+        logger.error(f"Service Worker デバッグエラー: {e}")
+        return create_error_response(f"Service Worker デバッグ情報取得失敗: {str(e)}", 500)
+
+# === 診断結果確認用のシンプルAPI ===
+@app.route('/api/simple_test', methods=['GET', 'POST', 'HEAD'])
+def simple_test():
+    """最もシンプルなテストAPI"""
+    try:
+        method = request.method
+        
+        if method == 'HEAD':
+            # HEADリクエスト専用レスポンス
+            response = make_response('', 200)
+            response.headers['Content-Type'] = 'text/plain'
+            response.headers['X-Test-Result'] = 'OK'
+            response.headers['X-Method'] = method
+            return response
+        else:
+            # GET/POSTの場合
+            return create_success_response({
+                'method': method,
+                'timestamp': datetime.now().isoformat(),
+                'status': 'test_ok'
+            }, f"{method} テスト成功")
+            
+    except Exception as e:
+        logger.error(f"シンプルテストエラー: {e}")
+        return create_error_response(f"テスト失敗: {str(e)}", 500)
 
 # 🔥 非同期API: モデル学習
 @app.route('/api/train', methods=['POST'])
@@ -587,8 +599,6 @@ def get_recent_results():
         logger.error(f"最近の結果取得エラー: {e}")
         return create_error_response(f"最近の結果取得中にエラーが発生しました: {str(e)}", 500)
 
-# app.py に追加するAPIエンドポイント
-
 # 🔥 予測履歴API
 @app.route('/api/prediction_history', methods=['GET'])
 def get_prediction_history():
@@ -632,200 +642,6 @@ def get_prediction_history():
     except Exception as e:
         logger.error(f"予測履歴API取得エラー: {e}")
         return create_error_response(f"予測履歴取得中にエラーが発生しました: {str(e)}", 500)
-
-# 🔥 予測詳細API
-@app.route('/api/prediction_detail/<int:round_number>', methods=['GET'])
-def get_prediction_detail(round_number):
-    """指定開催回の予測詳細を取得"""
-    try:
-        if not file_manager:
-            return create_error_response("システムが初期化されていません", 500)
-        
-        from models.prediction_history import RoundAwarePredictionHistory
-        history = RoundAwarePredictionHistory()
-        history.set_file_manager(file_manager)
-        
-        if not history.load_from_csv():
-            return create_error_response("予測履歴の読み込みに失敗しました", 500)
-        
-        detailed_analysis = history.get_detailed_analysis(round_number)
-        
-        if not detailed_analysis:
-            return create_error_response(f"第{round_number}回の予測が見つかりません", 404)
-        
-        return create_success_response(detailed_analysis, f"第{round_number}回の詳細を取得しました")
-        
-    except Exception as e:
-        logger.error(f"予測詳細取得エラー: {e}")
-        return create_error_response(f"予測詳細取得中にエラーが発生しました: {str(e)}", 500)
-
-# 🔥 予測開始API（初期化機能付き）
-@app.route('/api/predict_with_init', methods=['POST'])
-def predict_with_init():
-    """予測開始（自動初期化付き）"""
-    try:
-        # Celery接続確認
-        try:
-            # アクティブワーカーの確認
-            inspect = celery_app.control.inspect()
-            active = inspect.active()
-            if not active:
-                logger.warning("Celeryワーカーが検出されません")
-        except Exception as e:
-            logger.error(f"Celery接続エラー: {e}")
-            return create_error_response(f"非同期処理システムに接続できません: {str(e)}", 500)
-        
-        # 初期化 + 予測タスクを開始
-        task = tasks.predict_task.delay()
-        
-        return create_success_response({
-            'task_id': task.id,
-            'status': 'started',
-            'message': '予測を開始しました（初期化込み）',
-            'estimated_time': '3-10分'
-        }, "予測タスクを開始しました")
-        
-    except Exception as e:
-        logger.error(f"予測開始エラー: {e}")
-        return create_error_response(f"予測タスクの開始に失敗しました: {str(e)}", 500)
-
-# 🔥 軽量初期化API
-@app.route('/api/init_light', methods=['POST'])
-def init_light():
-    """軽量初期化（同期処理）"""
-    try:
-        # 重い初期化は非同期で実行
-        task = tasks.heavy_init_task.delay()
-        
-        return create_success_response({
-            'task_id': task.id,
-            'status': 'started',
-            'message': '初期化を開始しました',
-            'estimated_time': '2-5分'
-        }, "初期化タスクを開始しました")
-        
-    except Exception as e:
-        logger.error(f"軽量初期化エラー: {e}")
-        return create_error_response(f"初期化の開始に失敗しました: {str(e)}", 500)
-
-# app.py に追加するAPIエンドポイント
-
-# 🔥 段階的学習API群
-
-@app.route('/api/learning/progress', methods=['GET'])
-def get_learning_progress():
-    """学習進捗状況を取得"""
-    try:
-        task = tasks.get_learning_progress_task.delay()
-        
-        return create_success_response({
-            'task_id': task.id,
-            'status': 'started',
-            'message': '学習進捗を取得中...'
-        }, "学習進捗取得タスクを開始しました")
-        
-    except Exception as e:
-        logger.error(f"学習進捗取得APIエラー: {e}")
-        return create_error_response(f"学習進捗取得の開始に失敗しました: {str(e)}", 500)
-
-@app.route('/api/learning/stage/<stage_id>', methods=['POST'])
-def execute_learning_stage(stage_id):
-    """指定された学習段階を実行"""
-    try:
-        # 有効な段階IDチェック
-        valid_stages = [
-            'stage1_fixed_10', 'stage2_fixed_20', 'stage3_fixed_30', 
-            'stage4_expanding', 'stage5_ensemble'
-        ]
-        
-        if stage_id not in valid_stages:
-            return create_error_response(f"無効な学習段階ID: {stage_id}", 400)
-        
-        # 非同期タスクを開始
-        task = tasks.progressive_learning_stage_task.delay(stage_id)
-        
-        return create_success_response({
-            'task_id': task.id,
-            'stage_id': stage_id,
-            'status': 'started',
-            'message': f'学習段階 {stage_id} を開始しました'
-        }, f"学習段階 {stage_id} のタスクを開始しました")
-        
-    except Exception as e:
-        logger.error(f"学習段階実行APIエラー ({stage_id}): {e}")
-        return create_error_response(f"学習段階 {stage_id} の開始に失敗しました: {str(e)}", 500)
-
-@app.route('/api/learning/reset', methods=['POST'])
-def reset_learning_progress():
-    """学習進捗をリセット"""
-    try:
-        task = tasks.reset_learning_progress_task.delay()
-        
-        return create_success_response({
-            'task_id': task.id,
-            'status': 'started',
-            'message': '学習進捗をリセット中...'
-        }, "学習進捗リセットタスクを開始しました")
-        
-    except Exception as e:
-        logger.error(f"学習進捗リセットAPIエラー: {e}")
-        return create_error_response(f"学習進捗リセットの開始に失敗しました: {str(e)}", 500)
-
-@app.route('/api/learning/stages', methods=['GET'])
-def get_available_stages():
-    """利用可能な学習段階を取得（同期処理）"""
-    try:
-        # 軽量処理なので同期で実行
-        if not file_manager:
-            return create_error_response("システムが初期化されていません", 500)
-        
-        # 基本的な段階情報を返す
-        stages_info = {
-            'stage1_fixed_10': {
-                'id': 'stage1_fixed_10',
-                'name': '固定窓検証（10回分）',
-                'description': '直近10回での予測パターン分析',
-                'estimated_time': '3-5分',
-                'status': 'available'
-            },
-            'stage2_fixed_20': {
-                'id': 'stage2_fixed_20',
-                'name': '固定窓検証（20回分）',
-                'description': '中期20回での予測パターン分析',
-                'estimated_time': '5-8分',
-                'status': 'available'
-            },
-            'stage3_fixed_30': {
-                'id': 'stage3_fixed_30',
-                'name': '固定窓検証（30回分）',
-                'description': '長期30回での予測パターン分析',
-                'estimated_time': '8-12分',
-                'status': 'available'
-            },
-            'stage4_expanding': {
-                'id': 'stage4_expanding',
-                'name': '累積窓検証',
-                'description': '全履歴を活用した累積学習',
-                'estimated_time': '10-15分',
-                'status': 'available'
-            },
-            'stage5_ensemble': {
-                'id': 'stage5_ensemble',
-                'name': 'アンサンブル最適化',
-                'description': '全段階の結果を統合した最終調整',
-                'estimated_time': '2-3分',
-                'status': 'available'
-            }
-        }
-        
-        return create_success_response({
-            'stages': list(stages_info.values()),
-            'total_stages': len(stages_info)
-        }, "利用可能な学習段階を取得しました")
-        
-    except Exception as e:
-        logger.error(f"学習段階取得APIエラー: {e}")
-        return create_error_response(f"学習段階取得中にエラーが発生しました: {str(e)}", 500)
 
 # ファイル関連API（軽量処理）
 @app.route('/api/download/<filename>', methods=['GET'])
