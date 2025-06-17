@@ -1,0 +1,179 @@
+{
+  "name": "ロト7予測 - AI機械学習予測アプリ",
+  "short_name": "ロト7予測",
+  "description": "AI機械学習による高精度なロト7予測アプリ。自動データ取得、予測永続化、学習改善機能付き。",
+  "version": "1.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1890ff",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "ja",
+  "dir": "ltr",
+  
+  "icons": [
+    {
+      "src": "/static/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  "categories": [
+    "entertainment",
+    "games",
+    "utilities"
+  ],
+  
+  "screenshots": [
+    {
+      "src": "/static/screenshots/mobile-predict.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "予測画面 - モバイル"
+    },
+    {
+      "src": "/static/screenshots/mobile-history.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "履歴画面 - モバイル"
+    },
+    {
+      "src": "/static/screenshots/desktop-predict.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "予測画面 - デスクトップ"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "新しい予測",
+      "short_name": "予測",
+      "description": "最新の予測を取得",
+      "url": "/?action=predict",
+      "icons": [
+        {
+          "src": "/static/icons/shortcut-predict.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "予測履歴",
+      "short_name": "履歴",
+      "description": "過去の予測履歴を確認",
+      "url": "/?tab=history",
+      "icons": [
+        {
+          "src": "/static/icons/shortcut-history.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "分析画面",
+      "short_name": "分析",
+      "description": "詳細分析と学習",
+      "url": "/?tab=analysis",
+      "icons": [
+        {
+          "src": "/static/icons/shortcut-analysis.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  
+  "handle_links": "preferred",
+  
+  "protocol_handlers": [],
+  
+  "file_handlers": [
+    {
+      "action": "/upload",
+      "accept": {
+        "application/octet-stream": [".pkl"],
+        "text/csv": [".csv"]
+      }
+    }
+  ],
+  
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [".pkl", ".csv"]
+        }
+      ]
+    }
+  }
+}
