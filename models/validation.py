@@ -56,7 +56,7 @@ class TimeSeriesCrossValidator:
             result = {
                 'set_idx': i,
                 'matches': matches,
-                'accuracy': matches / 7.0,
+                'accuracy': matches / 5.0,
                 'predicted': [int(x) for x in predicted],
                 'actual': actual,
                 'matched_numbers': sorted(list(predicted_set & actual_set)),
@@ -96,10 +96,10 @@ class TimeSeriesCrossValidator:
                         if col in data.columns:
                             current.append(int(data.iloc[i][col]))
                     
-                    if len(current) != 7:
+                    if len(current) != 5:
                         continue
                     
-                    if not all(1 <= x <= 37 for x in current):
+                    if not all(1 <= x <= 31 for x in current):
                         continue
                     if len(set(current)) != 7:
                         continue
@@ -116,7 +116,7 @@ class TimeSeriesCrossValidator:
                     
                     # 本番と同じ16次元特徴量
                     sorted_nums = sorted(current)
-                    gaps = [sorted_nums[j+1] - sorted_nums[j] for j in range(6)]
+                    gaps = [sorted_nums[j+1] - sorted_nums[j] for j in range(4)]
                     
                     feat = [
                         float(np.mean(current)),           # 平均
@@ -145,7 +145,7 @@ class TimeSeriesCrossValidator:
                             if col in data.columns:
                                 next_nums.append(int(data.iloc[i+1][col]))
                         
-                        if len(next_nums) == 7:
+                        if len(next_nums) == 5:
                             for target_num in next_nums:
                                 features.append(feat.copy())
                                 targets.append(target_num)
@@ -228,12 +228,12 @@ class TimeSeriesCrossValidator:
                                 classes = model.classes_
                                 if len(classes) > 0:
                                     selected = np.random.choice(classes, p=proba/proba.sum())
-                                    if 1 <= selected <= 37:
+                                    if 1 <= selected <= 31:
                                         weight = self.model_weights.get(name, 0.33)
                                         ensemble_votes[int(selected)] += weight
                             else:
                                 pred = model.predict(X_scaled)[0]
-                                if 1 <= pred <= 37:
+                                if 1 <= pred <= 31:
                                     weight = self.model_weights.get(name, 0.33)
                                     ensemble_votes[int(pred)] += weight
                                     
@@ -246,15 +246,15 @@ class TimeSeriesCrossValidator:
                     ensemble_votes[num] += 0.1
                 
                 # 上位7個を選択
-                top_numbers = [num for num, _ in ensemble_votes.most_common(7)]
+                top_numbers = [num for num, _ in ensemble_votes.most_common(5)]
                 
                 # 不足分をランダム補完
-                while len(top_numbers) < 7:
-                    candidate = np.random.randint(1, 38)
+                while len(top_numbers) < 5:
+                    candidate = np.random.randint(1, 32)
                     if candidate not in top_numbers:
                         top_numbers.append(candidate)
                 
-                final_pred = sorted([int(x) for x in top_numbers[:7]])
+                final_pred = sorted([int(x) for x in top_numbers[:5]])
                 predictions.append(final_pred)
             
             return predictions

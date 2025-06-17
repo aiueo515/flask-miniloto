@@ -1,5 +1,5 @@
 """
-高度統合予測システム - Flask対応版
+高度統合予測システム - ミニロト対応版
 自動取得、学習、予測を統合
 """
 
@@ -20,16 +20,16 @@ from .validation import TimeSeriesCrossValidator
 
 logger = logging.getLogger(__name__)
 
-class AutoFetchEnsembleLoto7:
-    """高度統合予測システム（自動取得対応版）"""
+class AutoFetchEnsembleMiniLoto:
+    """高度統合予測システム（ミニロト対応版）"""
     
     def __init__(self):
-        logger.info("AutoFetchEnsembleLoto7初期化")
+        logger.info("AutoFetchEnsembleMiniLoto初期化")
         
-        # データ取得器
+        # データ取得器（ミニロト対応）
         self.data_fetcher = AutoDataFetcher()
         
-        # 複数モデル
+        # 複数モデル（そのまま使用可能）
         self.models = {
             'random_forest': RandomForestClassifier(
                 n_estimators=100, max_depth=12, random_state=42, n_jobs=-1
@@ -71,7 +71,7 @@ class AutoFetchEnsembleLoto7:
         # ファイル管理器（外部から設定）
         self.file_manager = None
         
-        logger.info("初期化完了 - 自動データ取得システム")
+        logger.info("初期化完了 - ミニロト自動データ取得システム")
         
     def set_file_manager(self, file_manager):
         """ファイル管理器を設定"""
@@ -100,7 +100,7 @@ class AutoFetchEnsembleLoto7:
     def auto_setup_and_train(self, force_full_train=False):
         """自動セットアップ・学習"""
         try:
-            logger.info("=== 自動セットアップ・学習開始 ===")
+            logger.info("=== ミニロト自動セットアップ・学習開始 ===")
             
             # 1. 最新データ取得
             if not self.data_fetcher.fetch_latest_data():
@@ -148,7 +148,7 @@ class AutoFetchEnsembleLoto7:
             if self.file_manager:
                 self.save_models()
             
-            logger.info("自動セットアップ・学習完了")
+            logger.info("ミニロト自動セットアップ・学習完了")
             return True
             
         except Exception as e:
@@ -156,14 +156,14 @@ class AutoFetchEnsembleLoto7:
             return False
     
     def train_ensemble_models(self, data):
-        """アンサンブルモデル学習（データフレーム対応）"""
+        """アンサンブルモデル学習（ミニロト対応）"""
         try:
-            logger.info("=== アンサンブル学習開始 ===")
+            logger.info("=== ミニロトアンサンブル学習開始 ===")
             
             # 実際のカラム名を使用
             main_cols = self.data_fetcher.main_columns
             
-            # 高度特徴量作成
+            # ミニロト用特徴量作成
             X, y = self.create_advanced_features(data, main_cols)
             if X is None or len(X) < 100:
                 logger.error(f"特徴量不足: {len(X) if X is not None else 0}件")
@@ -172,7 +172,7 @@ class AutoFetchEnsembleLoto7:
             self.data_count = len(data)
             
             # 各モデルの学習
-            logger.info("アンサンブルモデル学習中...")
+            logger.info("ミニロトアンサンブルモデル学習中...")
             
             for name, model in self.models.items():
                 try:
@@ -198,7 +198,7 @@ class AutoFetchEnsembleLoto7:
                     logger.error(f"    ❌ {name}: エラー {e}")
                     continue
             
-            logger.info(f"アンサンブル学習完了: {len(self.trained_models)}モデル")
+            logger.info(f"ミニロトアンサンブル学習完了: {len(self.trained_models)}モデル")
             return True
             
         except Exception as e:
@@ -206,9 +206,9 @@ class AutoFetchEnsembleLoto7:
             return False
     
     def create_advanced_features(self, data, main_cols):
-        """高度な特徴量エンジニアリング"""
+        """ミニロト用高度な特徴量エンジニアリング"""
         try:
-            logger.info("高度特徴量エンジニアリング開始")
+            logger.info("ミニロト用特徴量エンジニアリング開始")
             
             features = []
             targets = []
@@ -220,12 +220,12 @@ class AutoFetchEnsembleLoto7:
                         if col in data.columns:
                             current.append(int(data.iloc[i][col]))
                     
-                    if len(current) != 7:
+                    if len(current) != 5:  # ミニロトは5個
                         continue
                     
-                    if not all(1 <= x <= 37 for x in current):
+                    if not all(1 <= x <= 31 for x in current):  # ミニロト範囲：1-31
                         continue
-                    if len(set(current)) != 7:
+                    if len(set(current)) != 5:  # 重複チェック
                         continue
                     
                     # 基本統計
@@ -238,9 +238,9 @@ class AutoFetchEnsembleLoto7:
                             pair = tuple(sorted([current[j], current[k]]))
                             self.pair_freq[pair] += 1
                     
-                    # 特徴量（16次元に簡略化）
+                    # ミニロト用特徴量（14次元）
                     sorted_nums = sorted(current)
-                    gaps = [sorted_nums[j+1] - sorted_nums[j] for j in range(6)]
+                    gaps = [sorted_nums[j+1] - sorted_nums[j] for j in range(4)]  # 4個のギャップ
                     
                     feat = [
                         float(np.mean(current)),           # 平均
@@ -254,12 +254,12 @@ class AutoFetchEnsembleLoto7:
                         float(len([j for j in range(len(sorted_nums)-1) 
                                  if sorted_nums[j+1] - sorted_nums[j] == 1])), # 連続数
                         float(current[0]),                 # 第1数字
-                        float(current[3]),                 # 第4数字
-                        float(current[6]),                 # 第7数字
+                        float(current[2]),                 # 第3数字（中央）
+                        float(current[4]),                 # 第5数字
                         float(np.mean(gaps)),              # 平均ギャップ
                         float(max(gaps)),                  # 最大ギャップ
                         float(min(gaps)),                  # 最小ギャップ
-                        float(sum(1 for x in current if x <= 19))  # 前半数
+                        float(sum(1 for x in current if x <= 15))  # 前半数（31の約半分）
                     ]
                     
                     features.append(feat)
@@ -284,10 +284,10 @@ class AutoFetchEnsembleLoto7:
             # 特徴量を番号分複製
             X = []
             for feat in features:
-                for _ in range(7):
+                for _ in range(5):  # ミニロトは5個
                     X.append(feat)
             
-            logger.info(f"特徴量作成完了: {len(features)}組 → {len(X)}サンプル")
+            logger.info(f"ミニロト特徴量作成完了: {len(features)}組 → {len(X)}サンプル")
             return np.array(X), np.array(targets)
             
         except Exception as e:
@@ -332,20 +332,37 @@ class AutoFetchEnsembleLoto7:
             return [], {}
     
     def ensemble_predict(self, count=20):
-        """アンサンブル予測実行"""
+        """ミニロトアンサンブル予測実行"""
         try:
             if not self.trained_models:
                 logger.error("学習済みモデルなし")
                 return []
             
-            # 基準特徴量
+            # ミニロト用基準特徴量（16次元）
             if not hasattr(self, 'pattern_stats') or not self.pattern_stats:
-                base_features = [19.0, 10.0, 133.0, 3.5, 35.0, 5.0, 19.0, 30.0, 1.0, 10.0, 20.0, 30.0, 4.5, 8.0, 2.0, 3.0]
+                base_features = [
+                    16.0,    # 平均 (1+31)/2 = 16
+                    8.0,     # 標準偏差
+                    80.0,    # 合計 16*5 = 80
+                    2.5,     # 奇数数（31の約半分が奇数なので2.5個程度）
+                    29.0,    # 最大値
+                    3.0,     # 最小値
+                    16.0,    # 中央値
+                    26.0,    # 範囲
+                    1.0,     # 連続数
+                    8.0,     # 第1数字
+                    16.0,    # 第3数字（中央）
+                    24.0,    # 第5数字
+                    6.5,     # 平均ギャップ
+                    12.0,    # 最大ギャップ
+                    2.0,     # 最小ギャップ
+                    2.5      # 前半数
+                ]
             else:
                 base_features = [
-                    self.pattern_stats.get('avg_sum', 133) / 7,
-                    10.0, self.pattern_stats.get('avg_sum', 133), 3.5, 35.0, 5.0, 19.0, 30.0, 1.0,
-                    10.0, 20.0, 30.0, 4.5, 8.0, 2.0, 3.0
+                    self.pattern_stats.get('avg_sum', 80) / 5,
+                    8.0, self.pattern_stats.get('avg_sum', 80), 2.5, 29.0, 3.0, 16.0, 26.0, 1.0,
+                    8.0, 16.0, 24.0, 6.5, 12.0, 2.0, 2.5
                 ]
             
             predictions = []
@@ -366,12 +383,12 @@ class AutoFetchEnsembleLoto7:
                                 classes = model.classes_
                                 if len(classes) > 0:
                                     selected = np.random.choice(classes, p=proba/proba.sum())
-                                    if 1 <= selected <= 37:
+                                    if 1 <= selected <= 31:  # ミニロト範囲
                                         weight = self.model_weights.get(name, 0.33)
                                         ensemble_votes[int(selected)] += weight
                             else:
                                 pred = model.predict(X_scaled)[0]
-                                if 1 <= pred <= 37:
+                                if 1 <= pred <= 31:  # ミニロト範囲
                                     weight = self.model_weights.get(name, 0.33)
                                     ensemble_votes[int(pred)] += weight
                                     
@@ -379,9 +396,9 @@ class AutoFetchEnsembleLoto7:
                         logger.error(f"予測エラー ({name}): {e}")
                         continue
                 
-                # 上位7個を選択
-                if len(ensemble_votes) >= 7:
-                    selected_numbers = [num for num, _ in ensemble_votes.most_common(7)]
+                # 上位5個を選択（ミニロト）
+                if len(ensemble_votes) >= 5:
+                    selected_numbers = [num for num, _ in ensemble_votes.most_common(5)]
                     predictions.append(sorted(selected_numbers))
             
             return predictions
@@ -391,7 +408,7 @@ class AutoFetchEnsembleLoto7:
             return []
     
     def ensemble_predict_with_learning(self, count=20):
-        """学習改善を適用したアンサンブル予測"""
+        """学習改善を適用したミニロトアンサンブル予測"""
         try:
             if not self.trained_models:
                 logger.error("学習済みモデルなし")
@@ -402,17 +419,17 @@ class AutoFetchEnsembleLoto7:
             boost_numbers = adjustments.get('boost_numbers', [])
             pattern_targets = adjustments.get('pattern_targets', {})
             
-            # 基準特徴量（学習改善を反映）
+            # ミニロト用基準特徴量（学習改善を反映）
             if pattern_targets:
-                target_sum = pattern_targets.get('avg_sum', 133)
+                target_sum = pattern_targets.get('avg_sum', 80)
                 base_features = [
-                    target_sum / 7,  # 調整された平均
-                    10.0, target_sum, pattern_targets.get('avg_odd_count', 3.5),
-                    35.0, 5.0, 19.0, 30.0, 1.0,
-                    10.0, 20.0, 30.0, 4.5, 8.0, 2.0, 3.0
+                    target_sum / 5,  # 調整された平均
+                    8.0, target_sum, pattern_targets.get('avg_odd_count', 2.5),
+                    29.0, 3.0, 16.0, 26.0, 1.0,
+                    8.0, 16.0, 24.0, 6.5, 12.0, 2.0, 2.5
                 ]
             else:
-                base_features = [19.0, 10.0, 133.0, 3.5, 35.0, 5.0, 19.0, 30.0, 1.0, 10.0, 20.0, 30.0, 4.5, 8.0, 2.0, 3.0]
+                base_features = [16.0, 8.0, 80.0, 2.5, 29.0, 3.0, 16.0, 26.0, 1.0, 8.0, 16.0, 24.0, 6.5, 12.0, 2.0, 2.5]
             
             predictions = []
             
@@ -432,7 +449,7 @@ class AutoFetchEnsembleLoto7:
                                 classes = model.classes_
                                 if len(classes) > 0:
                                     selected = np.random.choice(classes, p=proba/proba.sum())
-                                    if 1 <= selected <= 37:
+                                    if 1 <= selected <= 31:  # ミニロト範囲
                                         weight = self.model_weights.get(name, 0.33)
                                         
                                         # ブースト番号には追加重み
@@ -442,7 +459,7 @@ class AutoFetchEnsembleLoto7:
                                         ensemble_votes[int(selected)] += weight
                             else:
                                 pred = model.predict(X_scaled)[0]
-                                if 1 <= pred <= 37:
+                                if 1 <= pred <= 31:  # ミニロト範囲
                                     weight = self.model_weights.get(name, 0.33)
                                     
                                     # ブースト番号には追加重み
@@ -455,9 +472,9 @@ class AutoFetchEnsembleLoto7:
                         logger.error(f"予測エラー ({name}): {e}")
                         continue
                 
-                # 上位7個を選択
-                if len(ensemble_votes) >= 7:
-                    selected_numbers = [num for num, _ in ensemble_votes.most_common(7)]
+                # 上位5個を選択（ミニロト）
+                if len(ensemble_votes) >= 5:
+                    selected_numbers = [num for num, _ in ensemble_votes.most_common(5)]
                     predictions.append(sorted(selected_numbers))
             
             return predictions
@@ -469,7 +486,7 @@ class AutoFetchEnsembleLoto7:
     def run_timeseries_validation(self):
         """時系列検証実行（第2段階）"""
         try:
-            logger.info("=== 時系列検証開始 ===")
+            logger.info("=== ミニロト時系列検証開始 ===")
             
             # データ取得
             if not self.data_fetcher.fetch_latest_data():
@@ -478,7 +495,7 @@ class AutoFetchEnsembleLoto7:
             
             # 時系列検証器初期化
             if not self.validator:
-                self.validator = TimeSeriesCrossValidator(self)
+                self.validator = TimeSeriesCrossValidator()
             
             # 検証実行
             results = self.validator.run_validation(
@@ -487,7 +504,7 @@ class AutoFetchEnsembleLoto7:
                 self.data_fetcher.round_column
             )
             
-            logger.info("時系列検証完了")
+            logger.info("ミニロト時系列検証完了")
             return results
             
         except Exception as e:
@@ -497,7 +514,7 @@ class AutoFetchEnsembleLoto7:
     def run_auto_verification_learning(self):
         """自動照合学習実行（第3段階）"""
         try:
-            logger.info("=== 自動照合・学習改善開始 ===")
+            logger.info("=== ミニロト自動照合・学習改善開始 ===")
             
             # データ取得
             if not self.data_fetcher.fetch_latest_data():
@@ -517,7 +534,7 @@ class AutoFetchEnsembleLoto7:
             
             if verified_count > 0:
                 # 2. 学習改善を反映してモデル再学習
-                logger.info("学習改善を反映してモデル再学習...")
+                logger.info("学習改善を反映してミニロトモデル再学習...")
                 success = self.train_ensemble_models(latest_data)
                 
                 if success:
@@ -529,7 +546,7 @@ class AutoFetchEnsembleLoto7:
             else:
                 logger.info("新しい照合可能な予測がありません")
             
-            logger.info("自動照合・学習改善完了")
+            logger.info("ミニロト自動照合・学習改善完了")
             return {
                 'verified_count': verified_count,
                 'improvements': self.auto_learner.improvement_metrics
@@ -543,6 +560,7 @@ class AutoFetchEnsembleLoto7:
         """システム状態を取得"""
         status = {
             'initialized': True,
+            'game_type': 'miniloto',
             'models_trained': len(self.trained_models),
             'data_count': self.data_count,
             'latest_round': self.data_fetcher.latest_round,

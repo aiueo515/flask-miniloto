@@ -1,5 +1,5 @@
 """
-自動データ取得クラス - Flask対応版
+自動データ取得クラス - ミニロト対応版
 """
 
 import requests
@@ -12,13 +12,14 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 class AutoDataFetcher:
-    """ロト7データ自動取得クラス"""
+    """ミニロトデータ自動取得クラス"""
     
     def __init__(self):
-        self.csv_url = "https://loto7.thekyo.jp/data/loto7.csv"
-        # 実際のCSVカラムに合わせて修正（文字化けを考慮）
-        self.main_columns = ['第1数字', '第2数字', '第3数字', '第4数字', '第5数字', '第6数字', '第7数字']
-        self.bonus_columns = ['BONUS1', 'BONUS2']
+        # ミニロト用のURL・設定に変更
+        self.csv_url = "https://miniloto.thekyo.jp/data/miniloto.csv"
+        # ミニロト用カラム（5個の本数字 + 1個のボーナス数字）
+        self.main_columns = ['第1数字', '第2数字', '第3数字', '第4数字', '第5数字']
+        self.bonus_columns = ['BONUS数字']  # ミニロトは1個のみ
         self.round_column = '開催回'
         self.date_column = '日付'
         self.latest_data = None
@@ -32,9 +33,9 @@ class AutoDataFetcher:
         self.cache_manager = file_manager
         
     def fetch_latest_data(self):
-        """最新のロト7データを自動取得"""
+        """最新のミニロトデータを自動取得"""
         try:
-            logger.info("=== 自動データ取得開始 ===")
+            logger.info("=== ミニロト自動データ取得開始 ===")
             logger.info(f"URL: {self.csv_url}")
             
             # CSVデータを取得
@@ -74,7 +75,7 @@ class AutoDataFetcher:
             if self.cache_manager:
                 self.cache_manager.save_data_cache(self.latest_data)
             
-            logger.info("自動データ取得完了")
+            logger.info("ミニロト自動データ取得完了")
             return True
             
         except requests.exceptions.RequestException as e:
@@ -96,8 +97,8 @@ class AutoDataFetcher:
                 csv_content = content.decode(encoding)
                 df = pd.read_csv(io.StringIO(csv_content))
                 
-                # 基本的な検証
-                if len(df) > 0 and len(df.columns) >= 7:
+                # 基本的な検証（ミニロト用）
+                if len(df) > 0 and len(df.columns) >= 5:  # 最低5列あればOK
                     logger.info(f"CSV解析成功（エンコーディング: {encoding}）")
                     return df
                     
@@ -154,7 +155,7 @@ class AutoDataFetcher:
         return self.latest_data
     
     def validate_data_integrity(self):
-        """データの整合性をチェック"""
+        """データの整合性をチェック（ミニロト用）"""
         if self.latest_data is None:
             return False, "データが読み込まれていません"
         
@@ -170,15 +171,15 @@ class AutoDataFetcher:
             if len(self.latest_data) == 0:
                 return False, "データが空です"
             
-            # 数値データの検証
+            # 数値データの検証（ミニロト: 1-31）
             for col in self.main_columns:
                 if col in self.latest_data.columns:
-                    # 数値範囲チェック（1-37）
+                    # 数値範囲チェック（1-31）
                     invalid_numbers = self.latest_data[
-                        (self.latest_data[col] < 1) | (self.latest_data[col] > 37)
+                        (self.latest_data[col] < 1) | (self.latest_data[col] > 31)
                     ]
                     if len(invalid_numbers) > 0:
-                        return False, f"{col}に無効な数値があります（1-37の範囲外）"
+                        return False, f"{col}に無効な数値があります（1-31の範囲外）"
             
             # 開催回の連続性チェック
             rounds = sorted(self.latest_data[self.round_column].unique())
@@ -270,7 +271,7 @@ class AutoDataFetcher:
                 # 日付
                 date_str = row.get(self.date_column, '') if self.date_column in row.index else ''
                 
-                if len(main_numbers) == 7:  # 有効なデータのみ
+                if len(main_numbers) == 5:  # ミニロトは5個の有効なデータのみ
                     results.append({
                         'round': round_num,
                         'date': date_str,
