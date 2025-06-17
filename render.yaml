@@ -82,7 +82,7 @@ services:
   # Redis（有料枠・IP許可リスト付き）
   - type: redis
     name: miniloto-redis
-    plan: starter  # 有料枠最安プラン
+    plan: standard
     region: oregon
     maxmemoryPolicy: allkeys-lru
     # IP許可リスト設定
