@@ -1,0 +1,89 @@
+services:
+  # メインWebアプリケーション
+  - type: web
+    name: loto7-prediction-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app --timeout 600 --workers 1 --max-requests 100 --preload --worker-class sync --worker-connections 1000 --max-requests-jitter 10
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.6
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: PORT
+        generateValue: true
+      # メモリ最適化
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Celery設定
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: loto7-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: loto7-redis
+          property: connectionString
+    
+    disk:
+      name: loto7-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+    
+    healthCheckPath: /
+    autoDeploy: true
+    region: oregon
+
+  # Celeryワーカー（バックグラウンドタスク処理）
+  - type: worker
+    name: loto7-celery-worker
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python worker.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.6
+      # メモリ最適化
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Celery設定
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: loto7-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: loto7-redis
+          property: connectionString
+      # ワーカー設定
+      - key: CELERY_WORKER_CONCURRENCY
+        value: "1"
+      - key: CELERY_WORKER_MAX_MEMORY
+        value: "400000"
+    
+    disk:
+      name: loto7-worker-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+    
+    autoDeploy: true
+    region: oregon
+
+  # Redis（Celeryブローカー）
+  - type: redis
+    name: loto7-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: allkeys-lru  # メモリ効率化
