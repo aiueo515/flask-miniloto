@@ -154,6 +154,7 @@ def index():
         if request.headers.get('Accept') == 'application/json' or 'api' in request.args:
             system_status = {
                 "api_version": "1.0.0",
+                "game_type": "miniloto",
                 "system_initialized": file_manager is not None,
                 "async_supported": True,
                 "celery_active": True,
@@ -172,7 +173,7 @@ def index():
             except:
                 pass
             
-            return create_success_response(system_status, "Loto7 Prediction API is running (Async Mode)")
+            return create_success_response(system_status, "ミニロト予測API is running (Async Mode)")
         
         # 通常のアクセスはPWAページを返す
         return render_template('index.html')
@@ -660,7 +661,7 @@ def get_available_stages():
 def download_file(filename):
     """ファイルダウンロード"""
     try:
-        allowed_files = ['model.pkl', 'prediction_history.csv', 'loto7_data.csv']
+        allowed_files = ['model.pkl', 'prediction_history.csv', 'miniloto.csv']
         
         if filename not in allowed_files:
             return create_error_response(f"ダウンロード許可されていないファイル: {filename}", 400)
@@ -683,7 +684,7 @@ def download_file(filename):
 def upload_file(filename):
     """ファイルアップロード"""
     try:
-        allowed_files = ['model.pkl', 'prediction_history.csv', 'loto7_data.csv']
+        allowed_files = ['model.pkl', 'prediction_history.csv', 'miniloto.csv']
         
         if filename not in allowed_files:
             return create_error_response(f"アップロード許可されていないファイル: {filename}", 400)
@@ -798,7 +799,7 @@ if __name__ == '__main__':
     optimization_thread.start()
 
 if __name__ == '__main__':
-    logger.info("Loto7 Prediction API starting (Async Mode)...")
+    logger.info("MiniLoto Prediction API starting (Async Mode)...")
     
     # 🔥 超軽量初期化のみ実行
     if ultra_light_init():
