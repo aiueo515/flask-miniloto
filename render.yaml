@@ -1,7 +1,7 @@
 services:
-  # メインWebアプリケーション
+  # メインWebアプリケーション  
   - type: web
-    name: loto7-prediction-api
+    name: miniloto-prediction-api
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -24,26 +24,24 @@ services:
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: loto7-redis
+          name: miniloto-redis
           property: connectionString
       - key: CELERY_RESULT_BACKEND
         fromService:
           type: redis
-          name: loto7-redis
+          name: miniloto-redis
           property: connectionString
-    
     disk:
-      name: loto7-data
+      name: miniloto-data
       mountPath: /opt/render/project/src/data
       sizeGB: 1
-    
     healthCheckPath: /
     autoDeploy: true
     region: oregon
 
   # Celeryワーカー（バックグラウンドタスク処理）
   - type: worker
-    name: loto7-celery-worker
+    name: miniloto-celery-worker
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -60,30 +58,28 @@ services:
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: loto7-redis
+          name: miniloto-redis
           property: connectionString
       - key: CELERY_RESULT_BACKEND
         fromService:
           type: redis
-          name: loto7-redis
+          name: miniloto-redis
           property: connectionString
       # ワーカー設定
       - key: CELERY_WORKER_CONCURRENCY
         value: "1"
       - key: CELERY_WORKER_MAX_MEMORY
         value: "400000"
-    
     disk:
-      name: loto7-worker-data
+      name: miniloto-worker-data
       mountPath: /opt/render/project/src/data
       sizeGB: 1
-    
     autoDeploy: true
     region: oregon
 
   # Redis（Celeryブローカー）
   - type: redis
-    name: loto7-redis
+    name: miniloto-redis
     plan: free
     region: oregon
-    maxmemoryPolicy: allkeys-lru  # メモリ効率化
+    maxmemoryPolicy: allkeys-lru
