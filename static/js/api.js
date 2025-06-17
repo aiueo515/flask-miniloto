@@ -101,6 +101,76 @@ class API {
             throw error;
         }
     }
+
+/**
+ * 🔧 ネットワーク診断（修正版）
+ */
+async diagnoseNetwork() {
+    const results = [];
+    
+    // テスト対象
+    const tests = [
+        { name: 'GET テスト', method: 'GET', url: '/api/network_test' },
+        { name: 'POST テスト', method: 'POST', url: '/api/network_test' },
+        { name: 'HEAD テスト', method: 'HEAD', url: '/api/network_test' },
+        { name: 'システム状態', method: 'GET', url: '/api/system_debug' }
+    ];
+    
+    for (const test of tests) {
+        try {
+            const start = performance.now();
+            
+            let response;
+            if (test.method === 'POST') {
+                response = await this.post(test.url, { test: true });
+            } else if (test.method === 'HEAD') {
+                const fetchResponse = await fetch(this.baseURL + test.url, { method: 'HEAD' });
+                response = { 
+                    status: fetchResponse.ok ? 'success' : 'error', 
+                    statusCode: fetchResponse.status 
+                };
+            } else {
+                response = await this.get(test.url);
+            }
+            
+            const end = performance.now();
+            const duration = Math.round(end - start);
+            
+            results.push({
+                test: test.name,
+                status: response.status === 'success' ? '✅' : '❌',
+                duration: `${duration}ms`,
+                method: test.method,
+                details: response.status === 'success' ? 'OK' : (response.message || 'エラー')
+            });
+            
+        } catch (error) {
+            results.push({
+                test: test.name,
+                status: '❌',
+                duration: 'タイムアウト',
+                method: test.method,
+                details: error.message
+            });
+        }
+    }
+    
+    return results;
+}
+
+/**
+ * 🔧 システム詳細情報取得
+ */
+async getSystemDebugInfo() {
+    try {
+        const response = await this.get('/api/system_debug');
+        return response;
+    } catch (error) {
+        console.error('システムデバッグ情報取得エラー:', error);
+        throw error;
+    }
+}
+
     
     /**
      * 🔥 非同期タスクの開始
@@ -271,120 +341,167 @@ class API {
         return this.get('/api/status');
     }
     
-    /**
-     * 🔥 重いコンポーネントの非同期初期化
-     * @param {Function} onProgress - 進捗コールバック
-     * @param {Function} onComplete - 完了コールバック
-     * @param {Function} onError - エラーコールバック
-     */
-    async initHeavyComponentsAsync(onProgress, onComplete, onError) {
-        try {
-            const taskId = await this.startAsyncTask('/api/init_heavy');
+
+/**
+ * 🔥 重いコンポーネントの非同期初期化（修正版）
+ */
+async initHeavyComponentsAsync(onProgress, onComplete, onError) {
+    try {
+        console.log('🔧 重いコンポーネント初期化開始...');
+        
+        // POSTリクエストでタスクを開始
+        const response = await this.post('/api/init_heavy', {
+            timestamp: new Date().toISOString()
+        });
+        
+        console.log('初期化レスポンス:', response);
+        
+        if (response.status === 'success' && response.data.task_id) {
+            const taskId = response.data.task_id;
+            console.log('初期化タスクID:', taskId);
             
+            // ポーリング開始
             this.pollTaskStatus(
                 taskId,
-                onProgress,
-                (result) => {
-                    console.log('重いコンポーネント初期化完了:', result);
-                    onComplete && onComplete(result);
-                },
-                onError
+                onProgress || ((progress) => console.log('初期化進捗:', progress)),
+                onComplete || ((result) => console.log('初期化完了:', result)),
+                onError || ((error) => console.error('初期化エラー:', error))
             );
             
             return taskId;
-        } catch (error) {
-            onError && onError(error);
-            throw error;
+        } else {
+            throw new Error(response.message || '初期化タスクの開始に失敗しました');
         }
+        
+    } catch (error) {
+        console.error('❌ 初期化開始エラー:', error);
+        if (onError) {
+            onError(error);
+        }
+        throw error;
     }
+}
+
     
-    /**
-     * 🔥 非同期予測取得
-     * @param {Function} onProgress - 進捗コールバック
-     * @param {Function} onComplete - 完了コールバック
-     * @param {Function} onError - エラーコールバック
-     */
-    async getPredictionAsync(onProgress, onComplete, onError) {
-        try {
-            const taskId = await this.startAsyncTask('/api/predict');
+
+/**
+ * 🔥 非同期予測取得（修正版）
+ */
+async getPredictionAsync(onProgress, onComplete, onError) {
+    try {
+        console.log('🎯 非同期予測開始...');
+        
+        // POSTリクエストでタスクを開始
+        const response = await this.post('/api/predict', {
+            async: true,
+            timestamp: new Date().toISOString()
+        });
+        
+        console.log('予測レスポンス:', response);
+        
+        if (response.status === 'success' && response.data.task_id) {
+            const taskId = response.data.task_id;
+            console.log('予測タスクID:', taskId);
             
+            // ポーリング開始
             this.pollTaskStatus(
                 taskId,
-                onProgress,
-                (result) => {
-                    console.log('予測生成完了:', result);
-                    onComplete && onComplete(result);
-                },
-                onError
+                onProgress || ((progress) => console.log('予測進捗:', progress)),
+                onComplete || ((result) => console.log('予測完了:', result)),
+                onError || ((error) => console.error('予測エラー:', error))
             );
             
             return taskId;
-        } catch (error) {
-            onError && onError(error);
-            throw error;
+        } else {
+            throw new Error(response.message || '予測タスクの開始に失敗しました');
         }
+        
+    } catch (error) {
+        console.error('❌ 予測開始エラー:', error);
+        if (onError) {
+            onError(error);
+        }
+        throw error;
     }
+}
+
     
-    /**
-     * 🔥 非同期モデル学習
-     * @param {Object} options - 学習オプション
-     * @param {Function} onProgress - 進捗コールバック
-     * @param {Function} onComplete - 完了コールバック
-     * @param {Function} onError - エラーコールバック
-     */
-    async trainModelAsync(options = {}, onProgress, onComplete, onError) {
-        try {
-            const defaultOptions = {
-                force_full_train: false,
-                run_timeseries_validation: true,
-                run_auto_verification: true
-            };
-            
-            const taskId = await this.startAsyncTask('/api/train', { ...defaultOptions, ...options });
+
+/**
+ * モデル学習（修正版）
+ */
+async trainModelAsync(options = {}, onProgress, onComplete, onError) {
+    try {
+        console.log('🤖 モデル学習開始...');
+        
+        const response = await this.post('/api/train', {
+            ...options,
+            async: true,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (response.status === 'success' && response.data.task_id) {
+            const taskId = response.data.task_id;
             
             this.pollTaskStatus(
                 taskId,
-                onProgress,
-                (result) => {
-                    console.log('モデル学習完了:', result);
-                    onComplete && onComplete(result);
-                },
-                onError
+                onProgress || ((progress) => console.log('学習進捗:', progress)),
+                onComplete || ((result) => console.log('学習完了:', result)),
+                onError || ((error) => console.error('学習エラー:', error))
             );
             
             return taskId;
-        } catch (error) {
-            onError && onError(error);
-            throw error;
+        } else {
+            throw new Error(response.message || '学習タスクの開始に失敗しました');
         }
+        
+    } catch (error) {
+        console.error('❌ 学習開始エラー:', error);
+        if (onError) {
+            onError(error);
+        }
+        throw error;
     }
+}
+
     
-    /**
-     * 🔥 非同期時系列検証
-     * @param {Function} onProgress - 進捗コールバック
-     * @param {Function} onComplete - 完了コールバック
-     * @param {Function} onError - エラーコールバック
-     */
-    async runValidationAsync(onProgress, onComplete, onError) {
-        try {
-            const taskId = await this.startAsyncTask('/api/validation');
+
+/**
+ * 時系列検証（修正版）
+ */
+async runValidationAsync(onProgress, onComplete, onError) {
+    try {
+        console.log('📊 時系列検証開始...');
+        
+        const response = await this.post('/api/validation', {
+            async: true,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (response.status === 'success' && response.data.task_id) {
+            const taskId = response.data.task_id;
             
             this.pollTaskStatus(
                 taskId,
-                onProgress,
-                (result) => {
-                    console.log('時系列検証完了:', result);
-                    onComplete && onComplete(result);
-                },
-                onError
+                onProgress || ((progress) => console.log('検証進捗:', progress)),
+                onComplete || ((result) => console.log('検証完了:', result)),
+                onError || ((error) => console.error('検証エラー:', error))
             );
             
             return taskId;
-        } catch (error) {
-            onError && onError(error);
-            throw error;
+        } else {
+            throw new Error(response.message || '検証タスクの開始に失敗しました');
         }
+        
+    } catch (error) {
+        console.error('❌ 検証開始エラー:', error);
+        if (onError) {
+            onError(error);
+        }
+        throw error;
     }
+}
+
     
     // === 軽量同期API（継続使用可能） ===
     
