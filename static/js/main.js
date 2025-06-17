@@ -309,7 +309,6 @@ class MobileDebugConsole {
         console.log('🎛️ スパムフィルター: 同一ログは30秒間隔で制限');
         console.log('📊 ログ容量: 500件まで保持');
     }
-    }
     
     createPanel() {
         this.panel = document.createElement('div');
