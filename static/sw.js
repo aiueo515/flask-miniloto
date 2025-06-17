@@ -1,65 +1,61 @@
 /**
- * Service Worker修正版 - mobile.jsとdebug-fix.jsを含める
+ * Service Worker修正版 - HEADリクエスト対応
+ * static/sw.js を以下の内容で置き換えてください
  */
 
-const CACHE_NAME = 'miniloto-v1-fixed';
-const API_CACHE_NAME = 'miniloto-api-v1-fixed';
-const CACHE_VERSION = '1.0.1'; // バージョンアップ
+const CACHE_NAME = 'miniloto-v2-fixed';
+const API_CACHE_NAME = 'miniloto-api-v2-fixed';
+const CACHE_VERSION = '2.0.0'; // バージョンアップ
 
-// キャッシュするリソース（mobile.jsとdebug-fix.jsを追加）
+// キャッシュするリソース
 const STATIC_RESOURCES = [
     '/',
     '/static/css/main.css',
     '/static/css/components.css',
     '/static/css/mobile.css',
-    '/static/css/mobile-final.css', // 追加
+    '/static/css/mobile-final.css',
     '/static/js/api.js',
     '/static/js/ui.js',
     '/static/js/main.js',
     '/static/js/analysis.js',
     '/static/js/pwa.js',
-    '/static/js/mobile.js', // 確実にキャッシュに含める
-    '/static/js/debug-fix.js', // 新しい緊急デバッグスクリプト
+    '/static/js/mobile.js',
+    '/static/js/debug-complete.js',
     '/static/icons/icon-192x192.png',
     '/static/icons/icon-512x512.png',
     '/manifest.json'
 ];
 
-// APIエンドポイント（キャッシュ対象）
-const API_ENDPOINTS = [
-    '/api/status',
-    '/api/recent_results',
-    '/api/prediction_history'
-];
-
 // キャッシュしないAPIエンドポイント（常に最新データが必要）
 const NO_CACHE_APIS = [
     '/api/predict',
-    '/api/train',
-    '/api/upload',
-    '/api/download'
+    '/api/train', 
+    '/api/validation',
+    '/api/init_heavy',
+    '/api/task/',
+    '/api/network_test',
+    '/api/simple_test',
+    '/api/system_debug'
 ];
 
 /**
  * Service Workerインストール
  */
 self.addEventListener('install', (event) => {
-    console.log('Service Worker: インストール開始（修正版）');
+    console.log('Service Worker: インストール開始（修正版v2）');
     
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('Service Worker: 静的リソースをキャッシュ（mobile.js含む）');
+                console.log('Service Worker: 静的リソースをキャッシュ');
                 return cache.addAll(STATIC_RESOURCES);
             })
             .then(() => {
-                console.log('Service Worker: インストール完了（修正版）');
-                // 即座にアクティブ化して古いバージョンを置き換え
+                console.log('Service Worker: インストール完了');
                 return self.skipWaiting();
             })
             .catch((error) => {
                 console.error('Service Worker: インストールエラー', error);
-                // エラーが発生してもインストール自体は完了させる
                 return self.skipWaiting();
             })
     );
@@ -69,37 +65,24 @@ self.addEventListener('install', (event) => {
  * Service Workerアクティベーション
  */
 self.addEventListener('activate', (event) => {
-    console.log('Service Worker: アクティベーション開始（修正版）');
+    console.log('Service Worker: アクティベーション開始（修正版v2）');
     
     event.waitUntil(
         Promise.all([
-            // 古いキャッシュの削除
             cleanupOldCaches(),
-            // 全てのクライアントを即座にコントロール
             self.clients.claim()
         ]).then(() => {
-            console.log('Service Worker: アクティベーション完了（修正版）');
-            // すべてのクライアントにリロードを通知
-            return self.clients.matchAll().then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({
-                        type: 'SW_UPDATED',
-                        message: 'Service Worker が更新されました'
-                    });
-                });
-            });
+            console.log('Service Worker: アクティベーション完了');
         })
     );
 });
 
 /**
- * 古いキャッシュの削除（強化版）
+ * 古いキャッシュの削除
  */
 async function cleanupOldCaches() {
     try {
         const cacheNames = await caches.keys();
-        console.log('Service Worker: 既存キャッシュ', cacheNames);
-        
         const validCaches = [CACHE_NAME, API_CACHE_NAME];
         
         const deletePromises = cacheNames
@@ -117,7 +100,7 @@ async function cleanupOldCaches() {
 }
 
 /**
- * フェッチイベント（修正版）
+ * フェッチイベント（修正版 - HEADリクエスト対応）
  */
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
@@ -127,86 +110,132 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // デバッグ用：mobile.jsのリクエストをログ出力
-    if (url.pathname.includes('mobile.js') || url.pathname.includes('debug-fix.js')) {
-        console.log('Service Worker: デバッグ関連ファイルリクエスト', url.pathname);
-    }
-    
-    // APIリクエストの処理
-    if (url.pathname.startsWith('/api/')) {
-        event.respondWith(handleAPIRequest(event.request));
+    // === 🔧 HEADリクエストの特別処理 ===
+    if (event.request.method === 'HEAD') {
+        console.log('Service Worker: HEADリクエスト処理', url.pathname);
+        
+        event.respondWith(
+            handleHEADRequest(event.request)
+        );
         return;
     }
     
-    // 静的リソースの処理
-    event.respondWith(handleStaticRequest(event.request));
+    // === 🔧 POSTリクエストの特別処理 ===
+    if (event.request.method === 'POST') {
+        console.log('Service Worker: POSTリクエスト処理', url.pathname);
+        
+        event.respondWith(
+            handlePOSTRequest(event.request)
+        );
+        return;
+    }
+    
+    // === 🔧 GETリクエストの処理 ===
+    if (event.request.method === 'GET') {
+        if (url.pathname.startsWith('/api/')) {
+            event.respondWith(handleAPIRequest(event.request));
+        } else {
+            event.respondWith(handleStaticRequest(event.request));
+        }
+        return;
+    }
+    
+    // その他のメソッド（OPTIONS等）は直接通す
+    console.log('Service Worker: その他のメソッド直接通し', event.request.method, url.pathname);
 });
 
 /**
- * 静的リソースリクエストの処理（修正版）
+ * HEADリクエスト専用処理
  */
-async function handleStaticRequest(request) {
+async function handleHEADRequest(request) {
     try {
-        // キャッシュから取得を試行
-        const cache = await caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(request);
+        console.log('Service Worker: HEADリクエスト処理開始', request.url);
         
-        if (cachedResponse) {
-            console.log('Service Worker: キャッシュから提供', request.url);
-            return cachedResponse;
-        }
+        // HEADリクエストは直接サーバーに送信
+        const response = await fetch(request, {
+            method: 'HEAD',
+            headers: request.headers,
+            mode: 'cors',
+            credentials: 'same-origin'
+        });
         
-        // キャッシュにない場合はネットワークから取得
-        console.log('Service Worker: ネットワークから取得', request.url);
-        const networkResponse = await fetch(request);
-        
-        // 成功した場合はキャッシュに保存
-        if (networkResponse.ok && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            await cache.put(request, responseToCache);
-            console.log('Service Worker: ネットワークレスポンスをキャッシュ', request.url);
-        }
-        
-        return networkResponse;
+        console.log('Service Worker: HEADレスポンス', response.status);
+        return response;
         
     } catch (error) {
-        console.error('Service Worker: リクエスト処理エラー', request.url, error);
+        console.error('Service Worker: HEADリクエストエラー', error);
         
-        // エラー時はキャッシュから再試行
-        const cache = await caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(request);
-        
-        if (cachedResponse) {
-            console.log('Service Worker: エラー時キャッシュフォールバック', request.url);
-            return cachedResponse;
-        }
-        
-        // それでもダメな場合は基本的なエラーレスポンス
-        if (request.url.endsWith('.js')) {
-            return new Response('console.error("ファイル読み込みエラー");', {
-                headers: { 'Content-Type': 'application/javascript' }
-            });
-        }
-        
-        throw error;
+        // エラー時は簡単なレスポンスを返す
+        return new Response('', {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+                'Content-Type': 'text/plain',
+                'X-SW-Error': 'HEAD request failed',
+                'X-SW-Fallback': 'true'
+            }
+        });
     }
 }
 
 /**
- * APIリクエストの処理
+ * POSTリクエスト専用処理
+ */
+async function handlePOSTRequest(request) {
+    try {
+        console.log('Service Worker: POSTリクエスト処理開始', request.url);
+        
+        // POSTリクエストは常に直接サーバーに送信（キャッシュしない）
+        const response = await fetch(request, {
+            method: request.method,
+            headers: request.headers,
+            body: request.body,
+            mode: 'cors',
+            credentials: 'same-origin'
+        });
+        
+        console.log('Service Worker: POSTレスポンス', response.status);
+        return response;
+        
+    } catch (error) {
+        console.error('Service Worker: POSTリクエストエラー', error);
+        
+        // エラー時はエラーレスポンスを返す
+        return new Response(JSON.stringify({
+            status: 'error',
+            message: 'ネットワークエラーが発生しました',
+            sw_error: true
+        }), {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-SW-Error': 'POST request failed'
+            }
+        });
+    }
+}
+
+/**
+ * APIリクエスト処理（GET専用）
  */
 async function handleAPIRequest(request) {
     const url = new URL(request.url);
     
-    // キャッシュしないAPIの場合は直接ネットワークから取得
-    if (NO_CACHE_APIS.some(api => url.pathname.startsWith(api))) {
+    // キャッシュしないAPIかチェック
+    const shouldNotCache = NO_CACHE_APIS.some(api => url.pathname.startsWith(api));
+    
+    if (shouldNotCache) {
+        // キャッシュしないAPIは直接通す
+        console.log('Service Worker: APIリクエスト直接通し', url.pathname);
+        
         try {
             return await fetch(request);
         } catch (error) {
-            console.error('Service Worker: API リクエストエラー', error);
+            console.error('Service Worker: API直接リクエストエラー', error);
             return new Response(JSON.stringify({
                 status: 'error',
-                message: 'ネットワークエラーが発生しました'
+                message: 'ネットワークエラーです'
             }), {
                 status: 503,
                 headers: { 'Content-Type': 'application/json' }
@@ -214,7 +243,7 @@ async function handleAPIRequest(request) {
         }
     }
     
-    // キャッシュ可能なAPIの場合
+    // キャッシュ可能なAPIの処理
     try {
         const cache = await caches.open(API_CACHE_NAME);
         
@@ -253,7 +282,45 @@ async function handleAPIRequest(request) {
 }
 
 /**
- * メッセージイベント（クライアントからの通信）
+ * 静的リソースリクエスト処理
+ */
+async function handleStaticRequest(request) {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(request);
+        
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        
+        const networkResponse = await fetch(request);
+        
+        if (networkResponse.ok) {
+            const responseToCache = networkResponse.clone();
+            await cache.put(request, responseToCache);
+        }
+        
+        return networkResponse;
+        
+    } catch (error) {
+        console.error('Service Worker: 静的リソースエラー', error);
+        
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(request);
+        
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        
+        return new Response('Service Worker Error', {
+            status: 503,
+            statusText: 'Service Unavailable'
+        });
+    }
+}
+
+/**
+ * メッセージハンドラー
  */
 self.addEventListener('message', (event) => {
     console.log('Service Worker: メッセージ受信', event.data);
@@ -261,110 +328,9 @@ self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-    
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({
-            version: CACHE_VERSION,
-            cacheName: CACHE_NAME
-        });
-    }
-    
-    if (event.data && event.data.type === 'FORCE_UPDATE') {
-        // 強制更新：すべてのキャッシュをクリアして再取得
-        event.waitUntil(
-            Promise.all([
-                caches.delete(CACHE_NAME),
-                caches.delete(API_CACHE_NAME)
-            ]).then(() => {
-                return caches.open(CACHE_NAME).then(cache => {
-                    return cache.addAll(STATIC_RESOURCES);
-                });
-            }).then(() => {
-                // クライアントに更新完了を通知
-                self.clients.matchAll().then(clients => {
-                    clients.forEach(client => {
-                        client.postMessage({
-                            type: 'FORCE_UPDATE_COMPLETE',
-                            message: 'キャッシュが更新されました'
-                        });
-                    });
-                });
-            })
-        );
-    }
 });
 
-/**
- * プッシュイベント（将来の拡張用）
- */
-self.addEventListener('push', (event) => {
-    if (event.data) {
-        const data = event.data.json();
-        console.log('Service Worker: プッシュ通知受信', data);
-        
-        const options = {
-            body: data.body || 'ミニロト予測アプリからの通知',
-            icon: '/static/icons/icon-192x192.png',
-            badge: '/static/icons/icon-192x192.png',
-            tag: 'miniloto-notification',
-            requireInteraction: false,
-            actions: [
-                {
-                    action: 'open',
-                    title: '開く'
-                },
-                {
-                    action: 'close',
-                    title: '閉じる'
-                }
-            ]
-        };
-        
-        event.waitUntil(
-            self.registration.showNotification(
-                data.title || 'ミニロト予測アプリ',
-                options
-            )
-        );
-    }
-});
-
-/**
- * 通知クリックイベント
- */
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    
-    if (event.action === 'open' || !event.action) {
-        event.waitUntil(
-            clients.matchAll({ type: 'window' }).then(clientList => {
-                for (const client of clientList) {
-                    if (client.url === '/' && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                if (clients.openWindow) {
-                    return clients.openWindow('/');
-                }
-            })
-        );
-    }
-});
-
-/**
- * エラーハンドリング
- */
-self.addEventListener('error', (event) => {
-    console.error('Service Worker: エラー発生', event.error);
-});
-
-self.addEventListener('unhandledrejection', (event) => {
-    console.error('Service Worker: 未処理のPromise拒否', event.reason);
-    event.preventDefault();
-});
-
-console.log('Service Worker: 修正版初期化完了', {
+console.log('Service Worker: 修正版v2読み込み完了', {
     version: CACHE_VERSION,
-    cacheName: CACHE_NAME,
-    staticResources: STATIC_RESOURCES.length
+    cacheName: CACHE_NAME
 });
