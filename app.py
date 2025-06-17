@@ -202,6 +202,177 @@ def init_heavy_async():
         logger.error(f"重い初期化API開始エラー: {e}")
         return create_error_response(f"初期化タスクの開始に失敗しました: {str(e)}", 500)
 
+# app.py に追加する修正パッチ
+# 既存の predict_async() の上に以下を追加してください
+
+# 🔧 予測API修正版（POSTメソッド対応）
+@app.route('/api/predict', methods=['GET', 'POST'])
+def predict_unified():
+    """統合予測API（GET/POST両対応）"""
+    try:
+        logger.info(f"予測API呼び出し: {request.method}")
+        
+        # POSTの場合はリクエストボディから、GETの場合はクエリパラメータから取得
+        if request.method == 'POST':
+            request_data = request.get_json() or {}
+            force_async = request_data.get('async', True)
+        else:
+            force_async = request.args.get('async', 'true').lower() == 'true'
+        
+        logger.info(f"非同期フラグ: {force_async}")
+        
+        # 非同期処理を推奨
+        if not force_async:
+            return create_error_response(
+                "同期モードは非推奨です。async=true パラメータを使用してください", 
+                400
+            )
+        
+        # Celery接続確認
+        try:
+            inspect = celery_app.control.inspect()
+            active = inspect.active()
+            if not active:
+                logger.warning("Celeryワーカーが検出されません")
+                return create_error_response("非同期処理システムが利用できません", 503)
+        except Exception as e:
+            logger.error(f"Celery接続エラー: {e}")
+            return create_error_response(f"非同期処理システムに接続できません: {str(e)}", 503)
+        
+        # 非同期タスクを開始
+        task = tasks.predict_task.delay()
+        logger.info(f"予測タスク開始: {task.id}")
+        
+        return create_success_response({
+            'task_id': task.id,
+            'status': 'started',
+            'message': '予測生成を開始しました',
+            'estimated_time': '30-60秒',
+            'method': request.method
+        }, "予測タスクを開始しました")
+        
+    except Exception as e:
+        logger.error(f"予測API エラー: {e}")
+        return create_error_response(f"予測開始に失敗しました: {str(e)}", 500)
+
+# 🔧 初期化API修正版（POSTメソッド対応）
+@app.route('/api/init_heavy', methods=['GET', 'POST'])
+def init_heavy_unified():
+    """統合初期化API（GET/POST両対応）"""
+    try:
+        logger.info(f"初期化API呼び出し: {request.method}")
+        
+        # Celery接続確認
+        try:
+            inspect = celery_app.control.inspect()
+            active = inspect.active()
+            if not active:
+                logger.warning("Celeryワーカーが検出されません")
+                return create_error_response("非同期処理システムが利用できません", 503)
+        except Exception as e:
+            logger.error(f"Celery接続エラー: {e}")
+            return create_error_response(f"非同期処理システムに接続できません: {str(e)}", 503)
+        
+        # 非同期タスクを開始
+        task = tasks.heavy_init_task.delay()
+        logger.info(f"初期化タスク開始: {task.id}")
+        
+        return create_success_response({
+            'task_id': task.id,
+            'status': 'started',
+            'message': '重いコンポーネントの初期化を開始しました',
+            'estimated_time': '2-5分',
+            'method': request.method
+        }, "初期化タスクを開始しました")
+        
+    except Exception as e:
+        logger.error(f"初期化API エラー: {e}")
+        return create_error_response(f"初期化開始に失敗しました: {str(e)}", 500)
+
+# 🔧 Service Worker診断用API
+@app.route('/api/network_test', methods=['GET', 'POST', 'HEAD', 'OPTIONS'])
+def network_test():
+    """ネットワーク診断用API（全HTTPメソッド対応）"""
+    try:
+        method = request.method
+        headers = dict(request.headers)
+        timestamp = datetime.now().isoformat()
+        
+        response_data = {
+            'method': method,
+            'timestamp': timestamp,
+            'status': 'ok',
+            'headers_received': len(headers),
+            'user_agent': headers.get('User-Agent', 'Unknown')[:100]
+        }
+        
+        if method == 'HEAD':
+            # HEADリクエストの場合はボディなしでレスポンス
+            response = make_response('', 200)
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['X-Test-Status'] = 'ok'
+            response.headers['X-Test-Method'] = method
+            return response
+        elif method == 'OPTIONS':
+            # OPTIONSリクエストの場合はCORS対応
+            response = make_response('', 200)
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, HEAD, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            return response
+        else:
+            # GET/POSTの場合は通常のJSONレスポンス
+            return create_success_response(response_data, f"{method} リクエストテスト成功")
+            
+    except Exception as e:
+        logger.error(f"ネットワークテストAPI エラー: {e}")
+        return create_error_response(f"ネットワークテストに失敗しました: {str(e)}", 500)
+
+# 🔧 システム状態詳細API
+@app.route('/api/system_debug', methods=['GET'])
+def get_system_debug_info():
+    """システムデバッグ情報取得"""
+    try:
+        import psutil
+        import os
+        
+        # プロセス情報
+        process = psutil.Process(os.getpid())
+        memory_info = process.memory_info()
+        
+        # Celery状態
+        celery_status = "unknown"
+        celery_workers = 0
+        try:
+            inspect = celery_app.control.inspect()
+            active = inspect.active()
+            if active:
+                celery_status = "active"
+                celery_workers = len(active)
+            else:
+                celery_status = "inactive"
+        except:
+            celery_status = "error"
+        
+        debug_info = {
+            'timestamp': datetime.now().isoformat(),
+            'process_id': os.getpid(),
+            'memory_usage_mb': round(memory_info.rss / 1024 / 1024, 2),
+            'cpu_percent': process.cpu_percent(),
+            'celery_status': celery_status,
+            'celery_workers': celery_workers,
+            'file_manager_status': 'initialized' if file_manager else 'not_initialized',
+            'async_mode': True,  # アプリは非同期対応
+            'environment': os.environ.get('FLASK_ENV', 'production'),
+            'request_count': getattr(app, '_request_count', 0)
+        }
+        
+        return create_success_response(debug_info, "システムデバッグ情報を取得しました")
+        
+    except Exception as e:
+        logger.error(f"システムデバッグ情報取得エラー: {e}")
+        return create_error_response(f"デバッグ情報取得に失敗しました: {str(e)}", 500)
+
 # 🔥 非同期API: 予測生成
 @app.route('/api/predict', methods=['GET'])
 def predict_async():
